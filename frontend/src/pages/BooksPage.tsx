@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Toast from "bootstrap/js/dist/toast";
 import CategoryFilter from "../components/CategoryFilter";
-import CartSummary from "../components/CartSummary";
 import BookList from "../components/BookList";
 import WelcomeBand from "../components/WelcomeBand";
 
