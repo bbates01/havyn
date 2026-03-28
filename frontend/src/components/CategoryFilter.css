@@ -1,0 +1,31 @@
+.category-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.25rem;
+    border-radius: 8px;
+}
+
+.category-item:hover {
+    background: var(--primary-soft);
+}
+
+.category-checkbox {
+    width: 16px;
+    height: 16px;
+}

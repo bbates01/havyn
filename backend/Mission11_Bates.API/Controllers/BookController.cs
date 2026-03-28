@@ -14,7 +14,12 @@ namespace Mission11_Bates.Controllers
         public BookController(BookDbContext temp) => _context = temp;
 
         [HttpGet("AllBooks")]
-        public IActionResult GetAllBooks(int pageSize = 10, int pageIndex = 1, string sortBy = "Title", string sortOrder = "desc")
+        public IActionResult GetAllBooks(
+            int pageSize = 10, 
+            int pageIndex = 1, 
+            string sortBy = "Title", 
+            string sortOrder = "desc", 
+            [FromQuery] List<string>? bookCategories = null)
         {
             var query = _context.Books.AsQueryable();
 
@@ -27,12 +32,17 @@ namespace Mission11_Bates.Controllers
                 query = query.OrderBy(x => x.Title);
             }
 
+            if (bookCategories != null && bookCategories.Any()) 
+            {
+                query = query.Where(b => bookCategories.Contains(b.Category));
+            }
+
+            var totalNumBooks = query.Count();
+
             var books = query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
-
-            var totalNumBooks = _context.Books.Count();
 
             var newDataObj = new
             {
@@ -41,6 +51,17 @@ namespace Mission11_Bates.Controllers
             };
             
             return Ok(newDataObj);
+        }
+
+        [HttpGet("GetBookCategories")]
+        public IActionResult GetBookCategories()
+        {
+            var bookCategories = _context.Books
+                .Select(b => b.Category)
+                .Distinct()
+                .ToList();
+
+            return Ok(bookCategories);
         }
     }
 }

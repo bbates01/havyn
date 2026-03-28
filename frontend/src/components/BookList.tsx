@@ -1,32 +1,36 @@
 import { useEffect, useState } from "react";
-import type { Book } from "./types/Book";
+import type { Book } from "../types/Book";
+import { useNavigate } from "react-router-dom";
 
-function BookList() {
+function BookList({selectedCategories}: {selectedCategories: string[]}) {
 
     const [books, setBooks] = useState<Book[]>([]);
     const [pageSize, setPageSize] = useState<number>(5);
     const [pageIndex, setPageIndex] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [sortOrder, setSortOrder] = useState<string>("asc");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fecthBooks = async () => {
+            const categoryParams = selectedCategories
+                .map((cat) => `bookCategories=${encodeURIComponent(cat)}`)
+                .join('&');
+
             const response = await fetch(
-                `https://localhost:7100/Book/AllBooks?pageSize=${pageSize}&pageIndex=${pageIndex}&sortBy=Title&sortOrder=${sortOrder}`
+                `https://localhost:7100/Book/AllBooks?pageSize=${pageSize}&pageIndex=${pageIndex}&sortBy=Title&sortOrder=${sortOrder}${selectedCategories.length ? `&${categoryParams}`: ``}`
             );
             const data = await response.json();
             setBooks(data.books);
             setTotalPages(Math.ceil(data.totalNumBooks / pageSize));
-            
         };
 
         fecthBooks();
-    }, [pageSize, pageIndex, sortOrder]);
+    }, [pageSize, pageIndex, sortOrder, selectedCategories]);
 
     return (
-        <div className="container mt-5 pb-4">
+        <section className="panel">
             <div className="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center gap-3 mb-4">
-                <h1 className="mb-0">Book List</h1>
 
                 <div className="d-flex align-items-center gap-2">
                     <span className="fw-semibold">Sort by Title:</span>
@@ -58,7 +62,7 @@ function BookList() {
             <div className="row g-4 mb-5">
                 {books.map((b) => (
                     <div className="col-md-6 col-lg-4" key={b.bookId}>
-                        <div className="card h-100">
+                        <div className="card h-100 border-0 shadow-sm book-card">
                             <div className="card-body">
                                 <h5 className="card-title">{b.title}</h5>
                                 <p className="card-text">
@@ -72,6 +76,12 @@ function BookList() {
                                         <div><strong>Price:</strong> ${b.price.toFixed(2)}</div>
                                     </small>
                                 </p>
+                                <button
+                                    className="btn btn-success"
+                                    onClick={() => navigate(`/purchase/${b.title}/${b.bookId}/${b.price}`)}
+                                >
+                                    Purchase
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -119,7 +129,7 @@ function BookList() {
                     <option value="20">20</option>
                 </select>
             </div>
-        </div>
+        </section>
     );
 }
 
