@@ -1,8 +1,9 @@
 import { useCart } from "../context/CartContext";
 
+// displays cart total and item count in header
 const CartSummary = () => {
-
     const { cart } = useCart();
+    // calculate cart totals for display
     const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     

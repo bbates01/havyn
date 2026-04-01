@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { CartItem } from "../types/CartItem";
 
-
-
+// interface for the cart context api
 interface CartContextType {
     cart: CartItem[];
     addToCart: (item: CartItem) => void;
@@ -12,9 +11,11 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// provider component to wrap app with cart state
 export const CartProvider = ({ children }: {children: ReactNode}) => {
     const [cart, setCart] = useState<CartItem[]>([]);
 
+    // add new item or increment quantitiy if it already exists
     const addToCart = (item: CartItem) => {
         setCart((prevCart) => {
             const existingItem = prevCart.find((c) => c.bookId === item.bookId);
@@ -30,10 +31,12 @@ export const CartProvider = ({ children }: {children: ReactNode}) => {
             return [...prevCart, item];
         });
     };
+    // remove item from cart by id
     const removeFromCart = (bookId: number) => {
         setCart((prevCart) => prevCart.filter((c) => c.bookId !== bookId));
     };
 
+    // empty cart completely
     const clearCart = () => {
         setCart(() => []);
     };
@@ -47,6 +50,7 @@ export const CartProvider = ({ children }: {children: ReactNode}) => {
     );
 };
 
+// custom hook to access cart context throughout app
 export const useCart = () => {
     const context = useContext(CartContext);
     if (!context) {

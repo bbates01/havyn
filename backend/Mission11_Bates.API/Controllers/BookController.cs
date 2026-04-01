@@ -11,8 +11,10 @@ namespace Mission11_Bates.Controllers
     {
         private BookDbContext _context;
         
+        // constructor to inject database context
         public BookController(BookDbContext temp) => _context = temp;
 
+        // retrieve paginated, filtered, and sorted books from database
         [HttpGet("AllBooks")]
         public IActionResult GetAllBooks(
             int pageSize = 10, 
@@ -23,6 +25,7 @@ namespace Mission11_Bates.Controllers
         {
             var query = _context.Books.AsQueryable();
 
+            // apply sorting by title
             if (sortBy == "Title" && sortOrder == "desc")
             {
                 query = query.OrderByDescending(x => x.Title);
@@ -32,18 +35,22 @@ namespace Mission11_Bates.Controllers
                 query = query.OrderBy(x => x.Title);
             }
 
+            // filter by selected categories if provided
             if (bookCategories != null && bookCategories.Any()) 
             {
                 query = query.Where(b => bookCategories.Contains(b.Category));
             }
 
+            // get total count before paging
             var totalNumBooks = query.Count();
 
+            // apply pagination using skip and take
             var books = query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
+            // return books with total count for pagination info
             var newDataObj = new
             {
                 Books = books,
@@ -53,6 +60,7 @@ namespace Mission11_Bates.Controllers
             return Ok(newDataObj);
         }
 
+        // get all unique catogories from the book collection
         [HttpGet("GetBookCategories")]
         public IActionResult GetBookCategories()
         {

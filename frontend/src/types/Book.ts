@@ -1,3 +1,4 @@
+// represents a book object from the api
 export interface Book {
     bookId: number,
     title: string,

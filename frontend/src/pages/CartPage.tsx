@@ -2,11 +2,13 @@ import { useEffect, useRef } from "react";
 import { useCart } from "../context/CartContext";
 import type { CartItem } from "../types/CartItem";
 
+// sliding drawer sidebar showing cart items and checkout
 function CartDrawer () {
     const { cart, removeFromCart } = useCart();
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const drawerRef = useRef<HTMLDivElement | null>(null);
 
+    // cleanup bootstrap backdrop when drawer is closed
     useEffect(() => {
         const handleHidden = () => {
             document.querySelectorAll('.offcanvas-backdrop').forEach((el) => el.remove());
@@ -20,6 +22,7 @@ function CartDrawer () {
     }, []);
 
     return (
+        // offcanvas drawer slides in from right side
         <div
             className="offcanvas offcanvas-end"
             tabIndex={-1}
@@ -35,6 +38,7 @@ function CartDrawer () {
             </div>
 
             <div className="offcanvas-body">
+                {/* show empty message or list items */}
                 {cart.length === 0 ? (
                     <p className="text-muted">Your cart is empty.</p>
                 ) : (

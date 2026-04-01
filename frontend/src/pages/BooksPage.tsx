@@ -5,11 +5,13 @@ import CategoryFilter from "../components/CategoryFilter";
 import BookList from "../components/BookList";
 import WelcomeBand from "../components/WelcomeBand";
 
+// main page for browsing books with filters
 function BooksPage () {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const location = useLocation();
     const navigate = useNavigate();
 
+    // display toast notification when navigating back from purchase page
     useEffect(() => {
         const toastMessage = (location.state as { toastMessage?: string } | null)?.toastMessage;
         if (toastMessage) {
@@ -22,11 +24,13 @@ function BooksPage () {
             navigate(location.pathname, { replace: true, state: {} });
         }
     }, [location, navigate]);
+    
     return (
         <div className="books-page">
             <WelcomeBand />
             <div className="d-flex justify-content-end mb-4">
             </div>
+            {/* layout with filter sidebar and book listing */}
             <div className="books-layout" id="book-results">
                 <aside className="filter-panel">
                     <CategoryFilter 

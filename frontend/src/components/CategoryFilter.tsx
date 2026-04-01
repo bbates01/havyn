@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import './CategoryFilter.css';
 
+// filter component to select book categories
 function CategoryFilter({ 
     selectedCategories, 
     setSelectedCategories,
@@ -10,7 +11,7 @@ function CategoryFilter({
 
     const [categories, setCategories] = useState<string[]>([]);
 
-
+    // load available categories from api on mount
     useEffect(() => {
         const fetchCategories = async () => {
             try{
@@ -28,6 +29,7 @@ function CategoryFilter({
 
     }, []);
 
+    // toggle category on or off when checkbox is clicked
     function handleCheckboxChange ({target}: {target: HTMLInputElement}) {
         const updatedCategories = selectedCategories.includes(target.value) 
         ? selectedCategories.filter(x => x !== target.value) 

@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import './App.css';
+// import context for managing shopping cart state
 import { CartProvider } from './context/CartContext';
 import BooksPage from './pages/BooksPage';
 import CartDrawer from './pages/CartPage';
@@ -11,6 +12,7 @@ function App() {
     <CartProvider>
       <Router>
         <div className="app-shell">
+          {/* main application header with branding and navigation */}
           <header className="site-header">
             <div className="brand">
               <div className="brand-icon">MB</div>
@@ -27,6 +29,7 @@ function App() {
           </header>
 
           <main className="site-main">
+            {/* route for pages based on url path */}
             <Routes>
               <Route path="/" element={<BooksPage />} />
               <Route path="/books" element={<BooksPage />} />
@@ -38,7 +41,7 @@ function App() {
             <small>© {new Date().getFullYear()} Mission 12 Bookstore · Built with React & Bootstrap</small>
           </footer>
           
-          {/* toast container for pop-up notification */}
+          {/* toast container for showing cart notification pop-ups */}
           <div className="toast-container position-fixed bottom-0 end-0 p-3">
             <div
               id="cartToast"

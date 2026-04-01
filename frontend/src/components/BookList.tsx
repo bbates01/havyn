@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Book } from "../types/Book";
 import { useNavigate } from "react-router-dom";
 
+// component to display books with pagination and sorting
 function BookList({selectedCategories}: {selectedCategories: string[]}) {
 
     const [books, setBooks] = useState<Book[]>([]);
@@ -11,12 +12,15 @@ function BookList({selectedCategories}: {selectedCategories: string[]}) {
     const [sortOrder, setSortOrder] = useState<string>("asc");
     const navigate = useNavigate();
 
+    // fetch books when filters or pagination changes
     useEffect(() => {
-        const fecthBooks = async () => {
+        const fecthBooks = async () => { // typo: should be 'fetchBooks'
+            // build query string for selected categories
             const categoryParams = selectedCategories
                 .map((cat) => `bookCategories=${encodeURIComponent(cat)}`)
                 .join('&');
 
+            // call api with pagination, sort, and filter parameters
             const response = await fetch(
                 `https://localhost:7100/Book/AllBooks?pageSize=${pageSize}&pageIndex=${pageIndex}&sortBy=Title&sortOrder=${sortOrder}${selectedCategories.length ? `&${categoryParams}`: ``}`
             );
