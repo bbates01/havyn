@@ -14,7 +14,13 @@ builder.Services.AddDbContext<BookDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("BookConnection")));
 
 // enable cors for frontend communication
-builder.Services.AddCors();
+builder.Services.AddCors(options => 
+    options.AddPolicy("AllowReactAppBlah",
+        policy => {
+            policy.WithOrigins("http://localhost:3000")
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        }));
 
 var app = builder.Build();
 
@@ -25,7 +31,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // allow frontend on localhost:3000 to access this api
-app.UseCors(x => x.WithOrigins("http://localhost:3000"));
+app.UseCors("AllowReactAppBlah");
 
 // enforce https in production
 app.UseHttpsRedirection();

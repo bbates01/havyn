@@ -6,6 +6,7 @@ import BooksPage from './pages/BooksPage';
 import CartDrawer from './pages/CartPage';
 import PurchasePage from './pages/PurchasePage';
 import CartSummary from './components/CartSummary';
+import AdminBooksPage from './pages/AdminBooksPage';
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
             <div className="brand">
               <div className="brand-icon">MB</div>
               <div>
-                <p className="eyebrow text-muted mb-1">Mission 12 Bookstore</p>
+                <p className="eyebrow text-muted mb-1">Mission 13 Bookstore</p>
               </div>
             </div>
             <nav className="main-nav" aria-label="Primary Navigation">
@@ -34,11 +35,12 @@ function App() {
               <Route path="/" element={<BooksPage />} />
               <Route path="/books" element={<BooksPage />} />
               <Route path="/purchase/:title/:bookId/:price" element={<PurchasePage />} />
+              <Route path="/adminbooks" element={<AdminBooksPage />} />
             </Routes>
           </main>
 
           <footer className="site-footer">
-            <small>© {new Date().getFullYear()} Mission 12 Bookstore · Built with React & Bootstrap</small>
+            <small>© {new Date().getFullYear()} Mission 13 Bookstore · Built with React & Bootstrap</small>
           </footer>
           
           {/* toast container for showing cart notification pop-ups */}
