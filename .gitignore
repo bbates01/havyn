@@ -36,9 +36,12 @@ frontend/.env.*
 # ------------------------------
 **/bin/
 **/obj/
+**/publish/
 *.user
 *.rsuser
 *.suo
+*.db
+*.sqlite3
 
 # Rider / ReSharper
 *.sln.iml
