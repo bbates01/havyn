@@ -2,12 +2,14 @@ import { useState, type SubmitEventHandler } from 'react';
 import type { Book } from '../types/Book';
 import { addBook } from '../api/BooksAPI';
 
+// Props for new book form
 interface NewBookFormProps {
-  onSuccess: () => void;
-  onCancel: () => void;
+  onSuccess: () => void;  // Callback when book is successfully added
+  onCancel: () => void;   // Callback when user cancels adding book
 }
 
 const NewBookForm = ({ onSuccess, onCancel }: NewBookFormProps) => {
+  // Initialize empty book form state
   const [formData, setFormData] = useState<Book>({
     bookId: 0,
     title: '',
@@ -20,14 +22,16 @@ const NewBookForm = ({ onSuccess, onCancel }: NewBookFormProps) => {
     price: 0,
   });
 
+  // Update form state when input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Submit new book to API
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     await addBook(formData);
-    onSuccess();
+    onSuccess();  // Notify parent component of successful submission
   };
 
   return (

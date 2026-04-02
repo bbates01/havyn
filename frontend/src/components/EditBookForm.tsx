@@ -3,10 +3,11 @@ import type { SubmitEventHandler } from 'react';
 import type { Book } from '../types/Book';
 import { updateBook } from '../api/BooksAPI';
 
+// Props for edit book form
 interface EditBookFormProps {
-  book: Book;
-  onSuccess: () => void;
-  onCancel: () => void;
+  book: Book;             // Book data to be edited
+  onSuccess: () => void;  // Callback when book is successfully updated
+  onCancel: () => void;   // Callback when user cancels editing
 }
 
 const EditBookForm = ({
@@ -14,16 +15,19 @@ const EditBookForm = ({
   onSuccess,
   onCancel,
 }: EditBookFormProps) => {
+  // Initialize form state with existing book data
   const [formData, setFormData] = useState<Book>({ ...book });
 
+  // Update form state when input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Submit updated book data to API
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     await updateBook(formData.bookId, formData);
-    onSuccess();
+    onSuccess();  // Notify parent component of successful submission
   };
 
   return (

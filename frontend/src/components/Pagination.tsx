@@ -1,9 +1,10 @@
+// Props for pagination component
 interface PaginationProps {
-    currentPage: number,
-    totalPages: number,
-    pageSize: number,
-    onPageChange: (newPage: number) => void;
-    onPageSizeChange: (newSize: number) => void;
+    currentPage: number,       // Current active page number
+    totalPages: number,        // Total number of pages available
+    pageSize: number,          // Number of items per page
+    onPageChange: (newPage: number) => void;      // Callback when user changes page
+    onPageSizeChange: (newSize: number) => void;  // Callback when user changes page size
 }
 
 const Pagination = ({
@@ -15,13 +16,16 @@ const Pagination = ({
 }: PaginationProps) => {
     return (
         <>
+        {/* Page navigation controls */}
         <nav aria-label="Page navigation" className="mb-4">
                 <ul className="pagination justify-content-center">
+                    {/* Previous button - disabled on first page */}
                     <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                         <button className="page-link" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
                             Previous
                         </button>
                     </li>
+                    {/* Generate page number buttons for each page */}
                     {[...Array(totalPages)].map((_, i) => (
                         <li key={i + 1} className={`page-item ${currentPage === (i + 1) ? 'active' : ''}`}>
                             <button className="page-link" onClick={() => onPageChange(i + 1)}>
@@ -29,6 +33,7 @@ const Pagination = ({
                             </button>
                         </li>
                     ))}
+                    {/* Next button - disabled on last page */}
                     <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                         <button className="page-link" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
                             Next
@@ -37,6 +42,7 @@ const Pagination = ({
                 </ul>
             </nav>
 
+            {/* Page size selector */}
             <div className="d-flex justify-content-center align-items-center gap-2">
                 <label htmlFor="pageSize" className="form-label mb-0">
                     Results per page:

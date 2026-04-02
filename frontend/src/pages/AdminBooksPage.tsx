@@ -6,15 +6,17 @@ import NewBookForm from "../components/NewBookForm";
 import EditBookForm from "../components/EditBookForm";
 
 const AdminBooksPage = () => {
-    const [books, setBooks] = useState<Book[]>([]);
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [pageSize, setPageSize] = useState<number>(10);
-    const [pageIndex, setPageIndex] = useState<number>(1);
-    const [totalPages, setTotalPages] = useState<number>(0);
-    const [showForm, setShowForm] = useState(false);
-    const [editingBook, setEditingBook] = useState<Book | null>(null);
+    // State management for books and UI
+    const [books, setBooks] = useState<Book[]>([]);              // List of books to display
+    const [error, setError] = useState<string | null>(null);    // Error messages
+    const [loading, setLoading] = useState(true);               // Loading state
+    const [pageSize, setPageSize] = useState<number>(10);       // Items per page
+    const [pageIndex, setPageIndex] = useState<number>(1);      // Current page number
+    const [totalPages, setTotalPages] = useState<number>(0);    // Total number of pages
+    const [showForm, setShowForm] = useState(false);            // Show/hide new book form
+    const [editingBook, setEditingBook] = useState<Book | null>(null);  // Book being edited
 
+    // Load books from API when page size or page index changes
     useEffect(() => {
         const loadBooks = async () => {
             try {
@@ -31,6 +33,7 @@ const AdminBooksPage = () => {
         loadBooks();
     }, [pageSize, pageIndex]);
 
+    // Delete book after user confirmation
     const handleDelete = async (bookId: number) => {
         const confirmDelete = window.confirm(
             'Are you sure you want to delete this project?'
@@ -39,7 +42,7 @@ const AdminBooksPage = () => {
 
         try {
             await deleteBook(bookId);
-            setBooks(books.filter((b) => b.bookId !== bookId));
+            setBooks(books.filter((b) => b.bookId !== bookId));  // Remove from local state
         } catch (err) {
             alert('Failed to delete project. Please try again.');
         }
@@ -50,8 +53,10 @@ const AdminBooksPage = () => {
 
     return (
         <section className="panel">
+            {/* Header with title and add book button */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Admin - Books</h2>
+                {/* Show add button only when not in form or edit mode */}
                 {!showForm && !editingBook && (
                     <button
                         className="btn btn-success"
@@ -62,6 +67,7 @@ const AdminBooksPage = () => {
                 )}
             </div>
 
+            {/* Show new book form if user clicked add button */}
             {showForm && (
                 <NewBookForm 
                     onSuccess={() => {
@@ -74,6 +80,7 @@ const AdminBooksPage = () => {
                 />
             )}
 
+            {/* Show edit form if user clicked edit button */}
             {editingBook && (
                 <EditBookForm
                     book={editingBook}
@@ -87,8 +94,10 @@ const AdminBooksPage = () => {
                 />
             )}
 
+            {/* Show books table and pagination when not in form or edit mode */}
             {!showForm && !editingBook && (
                 <>
+                    {/* Books table */}
                     <div className="table-responsive">
                         <table className="table table-hover align-middle">
                             <thead className="table-light">
@@ -106,6 +115,7 @@ const AdminBooksPage = () => {
                                 </tr>
                             </thead>
                             <tbody>
+                                {/* Display each book as a table row */}
                                 {books.map((b) => (
                                     <tr key={b.bookId}>
                                         <td className="fw-semibold">{b.bookId}</td>
@@ -118,6 +128,7 @@ const AdminBooksPage = () => {
                                         <td>{b.pageCount}</td>
                                         <td>${b.price.toFixed(2)}</td>
                                         <td>
+                                            {/* Edit and delete action buttons */}
                                             <div className="d-flex gap-2 justify-content-center">
                                                 <button
                                                     className="btn btn-outline-primary btn-sm"
@@ -141,6 +152,7 @@ const AdminBooksPage = () => {
                         </table>
                     </div>
 
+                    {/* Pagination controls */}
                     <Pagination 
                         currentPage={pageIndex}
                         totalPages={totalPages}
@@ -148,7 +160,7 @@ const AdminBooksPage = () => {
                         onPageChange={setPageIndex}
                         onPageSizeChange={(newSize) => {
                             setPageSize(newSize);
-                            setPageIndex(1);
+                            setPageIndex(1);  // Reset to first page when changing page size
                         }}
                     />
                 </>
