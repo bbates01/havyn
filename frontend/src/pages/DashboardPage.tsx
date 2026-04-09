@@ -22,8 +22,8 @@ import {
 const currentUser = {
   role: 'manager' as 'admin' | 'manager' | 'staff',
   name: 'manager User',
-  safehouseId: null as number | null // null for admin, integer FK for manager
-  // workerCode: 'SW-15' as string | null,  // e.g. 'SW-15' for staff, null otherwise
+  safehouseId: null as number | null, // null for admin, integer FK for manager
+  workerCode: null as string | null, // e.g. 'SW-15' for staff, null otherwise
 };
 // Examples:
 //   Admin:   { role:'admin',   name:'Admin User',       safehouseId:null, workerCode:null }
