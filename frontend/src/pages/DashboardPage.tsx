@@ -20,10 +20,15 @@ import {
 //   'manager' → Regional Manager — sees only their assigned safehouse
 //   'staff'   → Social Worker — sees only their assigned residents
 const currentUser = {
-  role: 'admin' as 'admin' | 'manager' | 'staff',
-  name: 'Jennifer Reyes',
-  safehouseId: null as number | null, // null for admin, number for manager/staff
+  role: 'manager' as 'admin' | 'manager' | 'staff',
+  name: 'manager User',
+  safehouseId: null as number | null // null for admin, integer FK for manager
+  // workerCode: 'SW-15' as string | null,  // e.g. 'SW-15' for staff, null otherwise
 };
+// Examples:
+//   Admin:   { role:'admin',   name:'Admin User',       safehouseId:null, workerCode:null }
+//   Manager: { role:'manager', name:'Regional Manager',  safehouseId:4,   workerCode:null }
+//   Staff:   { role:'staff',   name:'Social Worker',     safehouseId:null, workerCode:'SW-15' }
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Types (all backed by real DB tables) ────────────────────────────────────
@@ -322,6 +327,22 @@ function useDashboardData(safehouseFilterIds: number[]) {
       );
       finalData.donations = finalData.donations.filter((d) =>
         donationIdsForSafehouses.has(d.donationId)
+      );
+    }
+
+    // Staff only sees residents assigned to them (matched by worker code)
+    if (currentUser.role === 'staff' && currentUser.workerCode) {
+      finalData.residents = finalData.residents.filter(
+        (r) => r.assignedSocialWorker === currentUser.workerCode
+      );
+      const staffResidentIds = new Set(
+        finalData.residents.map((r) => r.residentId)
+      );
+      finalData.predictions = finalData.predictions.filter((p) =>
+        staffResidentIds.has(p.residentId)
+      );
+      finalData.incidents = finalData.incidents.filter((inc) =>
+        staffResidentIds.has(inc.residentId)
       );
     }
 
@@ -771,9 +792,9 @@ export default function DashboardPage() {
       <div style={{ flex: 1, minWidth: 0 }}>
 
       {/* ── Section 1: Stat Cards ──────────────────────────────────────── */}
-      <div className="row">
+      <div className="row justify-content-center">
         <StatCard
-          label="Active Residents"
+          label={currentUser.role === 'staff' ? 'Assigned Residents' : 'Active Residents'}
           value={derived.activeResidents.length}
           color="text-primary"
         />
@@ -788,26 +809,32 @@ export default function DashboardPage() {
                 : 'text-danger'
           }
         />
+        {currentUser.role !== 'staff' && (
+          <StatCard
+            label="Total Donations"
+            value={formatPeso(derived.totalDonations)}
+            onClick={() => setShowDonationSummary(true)}
+          />
+        )}
+        {currentUser.role !== 'staff' && (
+          <StatCard
+            label={"Incidents\n(Last 60 Days)"}
+            value={derived.incidents60Count}
+            color={derived.incidents60Count > 0 ? 'text-warning' : 'text-success'}
+            onClick={() => setShowIncidentSummary(true)}
+          />
+        )}
+        {currentUser.role !== 'staff' && (
+          <StatCard
+            label="Unresolved High Severity"
+            value={derived.unresolvedHighSeverity}
+            color="text-danger"
+            warning={derived.unresolvedHighSeverity > 0}
+            onClick={() => setShowUnresolvedHigh(true)}
+          />
+        )}
         <StatCard
-          label="Total Donations"
-          value={formatPeso(derived.totalDonations)}
-          onClick={() => setShowDonationSummary(true)}
-        />
-        <StatCard
-          label={"Incidents\n(Last 60 Days)"}
-          value={derived.incidents60Count}
-          color={derived.incidents60Count > 0 ? 'text-warning' : 'text-success'}
-          onClick={() => setShowIncidentSummary(true)}
-        />
-        <StatCard
-          label="Unresolved High Severity"
-          value={derived.unresolvedHighSeverity}
-          color="text-danger"
-          warning={derived.unresolvedHighSeverity > 0}
-          onClick={() => setShowUnresolvedHigh(true)}
-        />
-        <StatCard
-          label="Safehouses"
+          label="Total Safehouses"
           value={data.safehouses.filter((s) => s.status === 'Active').length}
           onClick={() => setShowSafehouseList(true)}
         />
@@ -973,218 +1000,325 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Section 3: Risk Distribution + Recent Incidents ────────────── */}
-      <div className="row mb-4">
-        {/* Risk Level Donut */}
-        <div className="col-12 col-lg-6">
-          <div className="card shadow-sm h-100">
-            <div className="card-body">
-              <h6 className="card-title fw-bold">Risk Level Distribution</h6>
-              {derived.riskDonut.length === 0 ? (
-                <p className="text-muted">
-                  No active residents with risk data.
-                </p>
-              ) : (
-                <ResponsiveContainer width="100%" height={360}>
-                  <PieChart>
-                    <Pie
-                      data={derived.riskDonut}
-                      cx="50%"
-                      cy="45%"
-                      innerRadius={70}
-                      outerRadius={120}
-                      dataKey="value"
-                      paddingAngle={2}
-                      label={// eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      (props: any) => {
-                        const { name: _name, value: _value, x: _x, y: _y } = props;
-                        const name = String(_name ?? '');
-                        const value = Number(_value ?? 0);
-                        const x = Number(_x ?? 0);
-                        const y = Number(_y ?? 0);
-                        const color = RISK_COLORS[name] ?? '#6c757d';
-                        const labelText = `${name}: ${value}`;
-                        const gap = 6;
-                        const tx = x > 200 ? x + gap : x - gap;
-                        return (
-                          <g>
-                            <rect
-                              x={tx > 200 ? tx - 6 : tx - labelText.length * 7.5 - 6}
-                              y={y - 12}
-                              width={labelText.length * 7.5 + 12}
-                              height={24}
-                              rx={6}
-                              fill={color}
-                              fillOpacity={0.12}
-                            />
-                            <text
-                              x={tx}
-                              y={y}
-                              textAnchor={tx > 200 ? 'start' : 'end'}
-                              dominantBaseline="central"
-                              fontSize={13}
-                              fontWeight={600}
-                              fill={color}
-                            >
-                              {labelText}
-                            </text>
-                          </g>
-                        );
-                      }}
-                      labelLine={{ strokeWidth: 1 }}
-                    >
-                      {derived.riskDonut.map((entry) => (
-                        <Cell
-                          key={entry.name}
-                          fill={RISK_COLORS[entry.name] ?? '#6c757d'}
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => setSelectedRiskLevel(entry.name)}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                    <text
-                      x="50%"
-                      y="42%"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="fw-bold"
-                      fontSize={30}
-                    >
-                      {derived.activeResidents.length}
-                    </text>
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
+      {/* ── Reusable section blocks (order depends on role) ────────────── */}
+      {(() => {
+        const riskDistribution = (
+          <div className="col-12 col-lg-6">
+            <div className="card shadow-sm h-100">
+              <div className="card-body">
+                <h6 className="card-title fw-bold">Risk Level Distribution</h6>
+                {derived.riskDonut.length === 0 ? (
+                  <p className="text-muted">
+                    No active residents with risk data.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={360}>
+                    <PieChart>
+                      <Pie
+                        data={derived.riskDonut}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={70}
+                        outerRadius={120}
+                        dataKey="value"
+                        paddingAngle={2}
+                        label={// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (props: any) => {
+                          const { name: _name, value: _value, x: _x, y: _y } = props;
+                          const name = String(_name ?? '');
+                          const value = Number(_value ?? 0);
+                          const x = Number(_x ?? 0);
+                          const y = Number(_y ?? 0);
+                          const color = RISK_COLORS[name] ?? '#6c757d';
+                          const labelText = `${name}: ${value}`;
+                          const gap = 6;
+                          const tx = x > 200 ? x + gap : x - gap;
+                          return (
+                            <g>
+                              <rect
+                                x={tx > 200 ? tx - 6 : tx - labelText.length * 7.5 - 6}
+                                y={y - 12}
+                                width={labelText.length * 7.5 + 12}
+                                height={24}
+                                rx={6}
+                                fill={color}
+                                fillOpacity={0.12}
+                              />
+                              <text
+                                x={tx}
+                                y={y}
+                                textAnchor={tx > 200 ? 'start' : 'end'}
+                                dominantBaseline="central"
+                                fontSize={13}
+                                fontWeight={600}
+                                fill={color}
+                              >
+                                {labelText}
+                              </text>
+                            </g>
+                          );
+                        }}
+                        labelLine={{ strokeWidth: 1 }}
+                      >
+                        {derived.riskDonut.map((entry) => (
+                          <Cell
+                            key={entry.name}
+                            fill={RISK_COLORS[entry.name] ?? '#6c757d'}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setSelectedRiskLevel(entry.name)}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                      <text
+                        x="50%"
+                        y="42%"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="fw-bold"
+                        fontSize={30}
+                      >
+                        {derived.activeResidents.length}
+                      </text>
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        );
 
-        {/* Recent Incidents */}
-        <div className="col-12 col-lg-6 mt-3 mt-lg-0">
-          <div className="card shadow-sm h-100">
-            <div className="card-body">
-              <h6 className="card-title fw-bold">Recent Incidents</h6>
-              {derived.recentIncidents.length === 0 ? (
-                <p className="text-muted mb-0">No incidents recorded.</p>
-              ) : (
-                <div className="list-group list-group-flush">
-                  {derived.recentIncidents.map((inc) => (
-                    <div
-                      key={inc.incidentId}
-                      className={`list-group-item px-0 ${inc.resolved ? 'text-muted' : ''}`}
+        const recentIncidents = (
+          <div className="col-12 col-lg-6 mt-3 mt-lg-0">
+            <div className="card shadow-sm h-100">
+              <div className="card-body">
+                <h6 className="card-title fw-bold">Recent Incidents</h6>
+                {derived.recentIncidents.length === 0 ? (
+                  <p className="text-muted mb-0">No incidents recorded.</p>
+                ) : (
+                  <div className="list-group list-group-flush">
+                    {derived.recentIncidents.map((inc) => (
+                      <div
+                        key={inc.incidentId}
+                        className={`list-group-item px-0 ${inc.resolved ? 'text-muted' : ''}`}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setSelectedIncident(inc.incidentId)}
+                      >
+                        <div className="d-flex justify-content-between align-items-start">
+                          <div>
+                            <span className="fw-semibold me-2">
+                              {inc.incidentType}
+                            </span>
+                            <SeverityBadge severity={inc.severity} />
+                            <small className="text-muted">
+                              — {inc.internalCode}
+                            </small>
+                          </div>
+                          <div className="text-end">
+                            <small className="text-muted">
+                              {formatDate(inc.incidentDate)}
+                            </small>
+                            {inc.resolved && (
+                              <span className="badge bg-secondary ms-2">
+                                Resolved
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+        const performanceTitle =
+          currentUser.role === 'staff'
+            ? 'Performance of Assigned Residents'
+            : currentUser.role === 'manager'
+              ? 'Safehouse Performance'
+              : 'Safehouse Performance Comparison';
+
+        const safehousePerformance = (
+          <div className="col-12">
+            <div className="card shadow-sm">
+              <div className="card-body">
+                <h6 className="card-title fw-bold">{performanceTitle}</h6>
+                <small className="text-muted d-block mb-2">
+                  Click a bar group to view safehouse details
+                </small>
+                {derived.safehouseChart.length === 0 ? (
+                  <p className="text-muted">No safehouse comparison data.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={derived.safehouseChart}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => setSelectedIncident(inc.incidentId)}
                     >
-                      <div className="d-flex justify-content-between align-items-start">
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis domain={[0, 100]} label={{ value: 'Score (%)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6c757d' } }} />
+                      <Tooltip
+                        formatter={(value: unknown, name: unknown) => [`${value}%`, String(name)]}
+                      />
+                      <Legend />
+                      <Bar dataKey="Health" fill="#0d6efd" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                      <Bar dataKey="Education" fill="#198754" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                      <Bar dataKey="Emotional" fill="#6f42c1" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                      <Bar dataKey="Overall" fill="#fd7e14" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+        if (currentUser.role === 'admin') {
+          return (
+            <>
+              {/* Admin: Risk + Incidents side-by-side, then Performance full-width */}
+              <div className="row mb-4">
+                {riskDistribution}
+                {recentIncidents}
+              </div>
+              <div className="row mb-4">{safehousePerformance}</div>
+            </>
+          );
+        }
+        return (
+          <>
+            {/* Manager / Staff: Risk + Performance side-by-side, then Incidents full-width */}
+            <div className="row mb-4">
+              {riskDistribution}
+              <div className="col-12 col-lg-6 mt-3 mt-lg-0">
+                <div className="card shadow-sm h-100">
+                  <div className="card-body">
+                    <h6 className="card-title fw-bold">{performanceTitle}</h6>
+                    <small className="text-muted d-block mb-2">
+                      Click a bar group to view details
+                    </small>
+                    {derived.safehouseChart.length === 0 ? (
+                      <p className="text-muted">No comparison data.</p>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={340}>
+                        <BarChart
+                          data={derived.safehouseChart}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                          <YAxis domain={[0, 100]} label={{ value: 'Score (%)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6c757d' } }} />
+                          <Tooltip
+                            formatter={(value: unknown, name: unknown) => [`${value}%`, String(name)]}
+                          />
+                          <Legend />
+                          <Bar dataKey="Health" fill="#0d6efd" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                          <Bar dataKey="Education" fill="#198754" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                          <Bar dataKey="Emotional" fill="#6f42c1" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                          <Bar dataKey="Overall" fill="#fd7e14" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row mb-4">
+              <div className="col-12">
+                <div className="card shadow-sm">
+                  <div className="card-body">
+                    <h6 className="card-title fw-bold">
+                      {currentUser.role === 'staff' ? "Havyn's Recent Incidents" : 'Recent Incidents'}
+                    </h6>
+                    {derived.recentIncidents.length === 0 ? (
+                      <p className="text-muted mb-0">No incidents recorded.</p>
+                    ) : (
+                      <div className="list-group list-group-flush">
+                        {derived.recentIncidents.map((inc) => (
+                          <div
+                            key={inc.incidentId}
+                            className={`list-group-item px-0 ${inc.resolved ? 'text-muted' : ''}`}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setSelectedIncident(inc.incidentId)}
+                          >
+                            <div className="d-flex justify-content-between align-items-start">
+                              <div>
+                                <span className="fw-semibold me-2">
+                                  {inc.incidentType}
+                                </span>
+                                <SeverityBadge severity={inc.severity} />
+                                <small className="text-muted">
+                                  — {inc.internalCode}
+                                </small>
+                              </div>
+                              <div className="text-end">
+                                <small className="text-muted">
+                                  {formatDate(inc.incidentDate)}
+                                </small>
+                                {inc.resolved && (
+                                  <span className="badge bg-secondary ms-2">
+                                    Resolved
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      })()}
+
+      {/* ── Section 5: Recent Donations (full width, hidden for staff) ── */}
+      {currentUser.role !== 'staff' && (
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="card shadow-sm">
+              <div className="card-body">
+                <h6 className="card-title fw-bold">Recent Donations</h6>
+                {derived.recentDonations.length === 0 ? (
+                  <p className="text-muted mb-0">No donations recorded.</p>
+                ) : (
+                  <div className="list-group list-group-flush">
+                    {derived.recentDonations.map((don) => (
+                      <div
+                        key={don.donationId}
+                        className="list-group-item d-flex justify-content-between align-items-center px-0"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setSelectedDonation(don.donationId)}
+                      >
                         <div>
-                          <span className="fw-semibold me-2">
-                            {inc.incidentType}
+                          <span className="fw-semibold">
+                            Supporter #{don.supporterId}
                           </span>
-                          <SeverityBadge severity={inc.severity} />
-                          <small className="text-muted">
-                            — {inc.internalCode}
-                          </small>
+                          <span className="badge bg-info text-dark ms-2">
+                            {don.donationType}
+                          </span>
                         </div>
                         <div className="text-end">
+                          <div className="fw-bold">
+                            {formatPeso(don.amount ?? don.estimatedValue)}
+                          </div>
                           <small className="text-muted">
-                            {formatDate(inc.incidentDate)}
+                            {formatDate(don.donationDate)}
                           </small>
-                          {inc.resolved && (
-                            <span className="badge bg-secondary ms-2">
-                              Resolved
-                            </span>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ── Section 4: Safehouse Performance (full width) ─────────────── */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h6 className="card-title fw-bold">
-                Safehouse Performance Comparison
-              </h6>
-              <small className="text-muted d-block mb-2">
-                Click a bar group to view safehouse details
-              </small>
-              {derived.safehouseChart.length === 0 ? (
-                <p className="text-muted">No safehouse comparison data.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart
-                    data={derived.safehouseChart}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                    <YAxis domain={[0, 100]} label={{ value: 'Score (%)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6c757d' } }} />
-                    <Tooltip
-                      formatter={(value: unknown, name: unknown) => [`${value}%`, String(name)]}
-                    />
-                    <Legend />
-                    <Bar dataKey="Health" fill="#0d6efd" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                    <Bar dataKey="Education" fill="#198754" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                    <Bar dataKey="Emotional" fill="#6f42c1" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                    <Bar dataKey="Overall" fill="#fd7e14" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Section 5: Recent Donations (full width) ──────────────────── */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card shadow-sm">
-            <div className="card-body">
-              <h6 className="card-title fw-bold">Recent Donations</h6>
-              {derived.recentDonations.length === 0 ? (
-                <p className="text-muted mb-0">No donations recorded.</p>
-              ) : (
-                <div className="list-group list-group-flush">
-                  {derived.recentDonations.map((don) => (
-                    <div
-                      key={don.donationId}
-                      className="list-group-item d-flex justify-content-between align-items-center px-0"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => setSelectedDonation(don.donationId)}
-                    >
-                      <div>
-                        <span className="fw-semibold">
-                          Supporter #{don.supporterId}
-                        </span>
-                        <span className="badge bg-info text-dark ms-2">
-                          {don.donationType}
-                        </span>
-                      </div>
-                      <div className="text-end">
-                        <div className="fw-bold">
-                          {formatPeso(don.amount ?? don.estimatedValue)}
-                        </div>
-                        <small className="text-muted">
-                          {formatDate(don.donationDate)}
-                        </small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       </div>{/* end main content column */}
 
