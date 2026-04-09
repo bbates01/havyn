@@ -375,19 +375,23 @@
   border: 1px solid var(--border);
 }
 
-/* ── Stub page placeholder ── */
-.stub-page {
-  max-width: 600px;
-  margin: 4rem auto;
-  text-align: center;
-  padding: 0 1rem;
+/* Lazy route chunks — short placeholder to avoid layout shift */
+.route-fallback {
+  min-height: 45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.stub-page h1 {
-  margin-bottom: 1rem;
-  color: var(--primary-dark);
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.stub-page p {
-  font-size: 1.05rem;
-}
