@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mission11_Bates.Data;
 
@@ -5,6 +6,7 @@ namespace Mission11_Bates.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TodoController : ControllerBase
     {
         private HavynDbContext _context;
@@ -53,6 +55,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpDelete("DeleteTodo/{todoId}")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult DeleteTodo(int todoId)
         {
             var todo = _context.TodoItems.Find(todoId);
@@ -69,6 +72,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpDelete("ClearCompleted/{userId}")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult ClearCompleted(string userId)
         {
             var completedItems = _context.TodoItems

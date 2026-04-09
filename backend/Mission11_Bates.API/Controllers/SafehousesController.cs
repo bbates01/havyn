@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mission11_Bates.Data;
 
@@ -12,6 +13,7 @@ namespace Mission11_Bates.Controllers
         public SafehousesController(HavynDbContext temp) => _context = temp;
 
         [HttpGet("AllSafehouses")]
+        [AllowAnonymous]
         public IActionResult GetAllSafehouses(
             int pageSize = 25,
             int pageIndex = 1,
@@ -46,6 +48,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpGet("GetSafehouse/{safehouseId}")]
+        [AllowAnonymous]
         public IActionResult GetSafehouse(int safehouseId)
         {
             var safehouse = _context.Safehouses.Find(safehouseId);

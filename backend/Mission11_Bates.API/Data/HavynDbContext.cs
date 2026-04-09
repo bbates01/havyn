@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Mission11_Bates.Data
 {
-    public class HavynDbContext : DbContext
+    public class HavynDbContext : IdentityDbContext<ApplicationUser>
     {
         public HavynDbContext(DbContextOptions<HavynDbContext> options) : base(options)
         {

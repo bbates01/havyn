@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mission11_Bates.Data;
 
@@ -5,6 +6,7 @@ namespace Mission11_Bates.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "InternalStaff")]
     public class PartnersController : ControllerBase
     {
         private HavynDbContext _context;
@@ -71,6 +73,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPost("AddPartner")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult AddPartner([FromBody] Partner newPartner)
         {
             _context.Partners.Add(newPartner);
@@ -79,6 +82,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdatePartner/{partnerId}")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult UpdatePartner(int partnerId, [FromBody] Partner updatedPartner)
         {
             var existing = _context.Partners.Find(partnerId);

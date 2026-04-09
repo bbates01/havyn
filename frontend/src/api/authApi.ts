@@ -1,7 +1,17 @@
 import { apiFetch } from './apiHelper';
 
+export interface AuthSession {
+  isAuthenticated: boolean;
+  userName?: string;
+  email?: string;
+  roles: string[];
+  safehouseId?: number | null;
+  socialWorkerCode?: string | null;
+  supporterId?: number | null;
+}
+
 export function login(email: string, password: string) {
-  return apiFetch<{ token?: string }>('/api/auth/login', {
+  return apiFetch<AuthSession>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
@@ -24,7 +34,7 @@ export function logout() {
 }
 
 export function getCurrentUser() {
-  return apiFetch<{ email: string; roles: string[] }>('/api/auth/me');
+  return apiFetch<AuthSession>('/api/auth/me');
 }
 
 export function verifyMfa(code: string) {

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../api/authApi';
+import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
 function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+  const { refreshAuth } = useAuth();
 
   useEffect(() => {
     document.title = 'Log In | Havyn';
@@ -15,7 +17,6 @@ function LoginPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setSuccess(false);
 
     const form = e.currentTarget;
     const fd = new FormData(form);
@@ -25,7 +26,20 @@ function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      setSuccess(true);
+
+      const user = await refreshAuth();
+
+      if (user?.roles.includes('Admin')) {
+        navigate('/admin');
+      } else if (user?.roles.includes('Manager')) {
+        navigate('/manager');
+      } else if (user?.roles.includes('SocialWorker')) {
+        navigate('/staff');
+      } else if (user?.roles.includes('Donor')) {
+        navigate('/donor');
+      } else {
+        navigate('/');
+      }
     } catch {
       setError(
         'Sign-in could not be completed. Check your details or try again later.'
@@ -82,13 +96,9 @@ function LoginPage() {
             aria-live="polite"
             id="login-feedback"
           >
-            {error ? (
+            {error && (
               <span className="login-feedback--error">{error}</span>
-            ) : success ? (
-              <span className="login-feedback--success">
-                You&apos;re signed in. Welcome back.
-              </span>
-            ) : null}
+            )}
           </div>
         </form>
 

@@ -1,8 +1,17 @@
 import { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function PublicNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { isAuthenticated, loading, logoutUser } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    setMenuOpen(false);
+    await logoutUser();
+    navigate('/');
+  }
 
   return (
     <header className="public-navbar">
@@ -32,11 +41,23 @@ function PublicNavbar() {
               Privacy Policy
             </NavLink>
           </li>
-          <li>
-            <NavLink to="/login" onClick={() => setMenuOpen(false)}>
-              Log In
-            </NavLink>
-          </li>
+          {!loading && (
+            <li>
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  className="navbar-logout-btn"
+                  onClick={handleLogout}
+                >
+                  Log Out
+                </button>
+              ) : (
+                <NavLink to="/login" onClick={() => setMenuOpen(false)}>
+                  Log In
+                </NavLink>
+              )}
+            </li>
+          )}
         </ul>
       </nav>
     </header>
