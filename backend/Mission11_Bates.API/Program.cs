@@ -18,9 +18,12 @@ builder.Services.AddDbContext<HavynDbContext>(options =>
 builder.Services.AddCors(options => 
     options.AddPolicy("AllowReactAppBlah",
         policy => {
-            policy.WithOrigins("http://localhost:3000", "https://jolly-plant-04f3f5b1e.7.azurestaticapps.net")
+            policy.WithOrigins(
+                    "http://localhost:3000", 
+                    "https://black-river-0292ddd1e.2.azurestaticapps.net")
                 .AllowAnyMethod()
-                .AllowAnyHeader();
+                .AllowAnyHeader()
+                .AllowCredentials();
         }));
 
 var app = builder.Build();
