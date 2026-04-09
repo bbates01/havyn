@@ -20,7 +20,8 @@ builder.Services.AddCors(options =>
         policy => {
             policy.WithOrigins(
                     "http://localhost:3000", 
-                    "https://black-river-0292ddd1e.2.azurestaticapps.net")
+                    "https://black-river-0292ddd1e.2.azurestaticapps.net",
+                    "https://lemon-rock-07f22ec1e.7.azurestaticapps.net")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
