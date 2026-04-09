@@ -29,6 +29,8 @@ namespace Mission11_Bates.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<TodoItem> TodoItems { get; set; }
         public DbSet<ResidentPrediction> ResidentPredictions { get; set; }
+        public DbSet<ResidentIncidentRisk> ResidentIncidentRisk { get; set; }
+        public DbSet<MlModelMeta> MlModelMeta { get; set; }
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
