@@ -22,103 +22,31 @@ interface TestResult {
 const PG = 'pageSize=5&pageIndex=1';
 
 const tests: TestDescriptor[] = [
-  {
-    name: 'Residents',
-    group: 'Core Data',
-    path: `/Residents/AllResidents?${PG}`,
-  },
-  {
-    name: 'Supporters',
-    group: 'Core Data',
-    path: `/Supporters/AllSupporters?${PG}`,
-  },
-  {
-    name: 'Safehouses',
-    group: 'Core Data',
-    path: `/Safehouses/AllSafehouses?${PG}`,
-  },
-  { name: 'Partners', group: 'Core Data', path: `/Partners/AllPartners?${PG}` },
+  { name: 'Residents', group: 'Core Data', path: `/api/Residents/AllResidents?${PG}` },
+  { name: 'Supporters', group: 'Core Data', path: `/api/Supporters/AllSupporters?${PG}` },
+  { name: 'Safehouses', group: 'Core Data', path: `/api/Safehouses/AllSafehouses?${PG}` },
+  { name: 'Partners', group: 'Core Data', path: `/api/Partners/AllPartners?${PG}` },
 
-  {
-    name: 'Donations',
-    group: 'Donations',
-    path: `/Donations/AllDonations?${PG}`,
-  },
+  { name: 'Donations', group: 'Donations', path: `/api/Donations/AllDonations?${PG}` },
 
-  {
-    name: 'Appointments',
-    group: 'Services',
-    path: `/AppointmentsAndEvents/AllAppointments?${PG}`,
-  },
-  {
-    name: 'Events',
-    group: 'Services',
-    path: `/AppointmentsAndEvents/AllEvents?${PG}`,
-  },
-  {
-    name: 'Home Visitations',
-    group: 'Services',
-    path: `/HomeVisitations/AllVisitations?${PG}`,
-  },
-  {
-    name: 'Process Recordings',
-    group: 'Services',
-    path: `/ProcessRecordings/AllRecordings?${PG}`,
-  },
-  {
-    name: 'Intervention Plans',
-    group: 'Services',
-    path: `/InterventionPlans/AllPlans?${PG}`,
-  },
+  { name: 'Appointments', group: 'Services', path: `/api/AppointmentsAndEvents/AllAppointments?${PG}` },
+  { name: 'Events', group: 'Services', path: `/api/AppointmentsAndEvents/AllEvents?${PG}` },
+  { name: 'Home Visitations', group: 'Services', path: `/api/HomeVisitations/AllVisitations?${PG}` },
+  { name: 'Process Recordings', group: 'Services', path: `/api/ProcessRecordings/AllRecordings?${PG}` },
+  { name: 'Intervention Plans', group: 'Services', path: `/api/InterventionPlans/AllPlans?${PG}` },
 
-  {
-    name: 'Education Records',
-    group: 'Records',
-    path: `/EducationRecords/AllRecords?${PG}`,
-  },
-  {
-    name: 'Health & Wellbeing',
-    group: 'Records',
-    path: `/HealthWellbeingRecords/AllRecords?${PG}`,
-  },
-  {
-    name: 'Incident Reports',
-    group: 'Records',
-    path: `/IncidentReports/AllIncidents?${PG}`,
-  },
+  { name: 'Education Records', group: 'Records', path: `/api/EducationRecords/AllRecords?${PG}` },
+  { name: 'Health & Wellbeing', group: 'Records', path: `/api/HealthWellbeingRecords/AllRecords?${PG}` },
+  { name: 'Incident Reports', group: 'Records', path: `/api/IncidentReports/AllIncidents?${PG}` },
 
-  {
-    name: 'Social Media Posts',
-    group: 'Content',
-    path: `/SocialMediaPosts/AllPosts?${PG}`,
-  },
-  {
-    name: 'Resident Predictions',
-    group: 'Content',
-    path: `/ResidentPredictions/All?${PG}`,
-  },
+  { name: 'Social Media Posts', group: 'Content', path: `/api/SocialMediaPosts/AllPosts?${PG}` },
+  { name: 'Resident Predictions', group: 'Content', path: `/api/ResidentPredictions/All?${PG}` },
 
-  {
-    name: 'Resident Outcomes',
-    group: 'Reports',
-    path: '/Reports/ResidentOutcomes',
-  },
-  {
-    name: 'Donation Trends',
-    group: 'Reports',
-    path: '/Reports/DonationTrends',
-  },
-  {
-    name: 'Safehouse Comparison',
-    group: 'Reports',
-    path: '/Reports/SafehouseComparison',
-  },
-  {
-    name: 'Services Provided',
-    group: 'Reports',
-    path: '/Reports/ServicesProvided',
-  },
-  { name: 'Public Impact', group: 'Reports', path: '/Reports/PublicImpact' },
+  { name: 'Resident Outcomes', group: 'Reports', path: '/api/Reports/ResidentOutcomes' },
+  { name: 'Donation Trends', group: 'Reports', path: '/api/Reports/DonationTrends' },
+  { name: 'Safehouse Comparison', group: 'Reports', path: '/api/Reports/SafehouseComparison' },
+  { name: 'Services Provided', group: 'Reports', path: '/api/Reports/ServicesProvided' },
+  { name: 'Public Impact', group: 'Reports', path: '/api/Reports/PublicImpact' },
 ];
 
 async function callEndpoint(path: string): Promise<unknown> {
