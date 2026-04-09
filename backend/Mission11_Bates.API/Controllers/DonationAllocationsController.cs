@@ -11,6 +11,13 @@ namespace Mission11_Bates.Controllers
 
         public DonationAllocationsController(HavynDbContext temp) => _context = temp;
 
+        [HttpGet("All")]
+        public IActionResult GetAll()
+        {
+            var allocations = _context.DonationAllocations.ToList();
+            return Ok(allocations);
+        }
+
         [HttpGet("ByDonation/{donationId}")]
         public IActionResult GetByDonation(int donationId)
         {
