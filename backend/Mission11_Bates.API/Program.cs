@@ -38,9 +38,6 @@ if (app.Environment.IsDevelopment())
 // allow frontend on localhost:3000 to access this api
 app.UseCors("AllowReactAppBlah");
 
-// enforce https in production
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 // register all controller routes
