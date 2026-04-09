@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './ApiTestPage.css';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -147,19 +149,27 @@ export default function ApiTestPage() {
   const groups = [...new Set(tests.map((t) => t.group))];
 
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
+    <div className="api-test-page container py-4">
+      <header className="api-test-header">
         <div>
-          <h1 className="mb-1">API Test Dashboard</h1>
-          <p className="text-muted mb-0">
+          <h1 className="mb-1 api-test-title">API Test Dashboard</h1>
+          <p className="text-muted mb-0 api-test-meta">
             Calls {tests.length} backend endpoints to verify connectivity.{' '}
             <code>{BASE_URL || '(VITE_API_URL not set)'}</code>
           </p>
         </div>
-        <button className="btn btn-primary btn-lg" onClick={runAll} disabled={running}>
+        <button
+          className="btn btn-primary btn-lg api-test-run-btn"
+          type="button"
+          onClick={runAll}
+          disabled={running}
+        >
           {running ? (
             <>
-              <span className="spinner-border spinner-border-sm me-2" role="status" />
+              <span
+                className="spinner-border spinner-border-sm me-2"
+                role="status"
+              />
               Running...
             </>
           ) : results.length > 0 ? (
@@ -168,39 +178,41 @@ export default function ApiTestPage() {
             'Run All Tests'
           )}
         </button>
-      </div>
+      </header>
 
       {results.length > 0 && (
-        <div className="row g-3 mb-4">
-          <div className="col-auto">
-            <div className="card text-center border-0 bg-light">
-              <div className="card-body py-2 px-4">
+        <div className="api-test-stats">
+          <div className="api-test-stat-card">
+            <div className="card text-center border-0 bg-light h-100">
+              <div className="card-body py-2 px-3">
                 <div className="fs-3 fw-bold">{tests.length}</div>
                 <small className="text-muted">Total</small>
               </div>
             </div>
           </div>
-          <div className="col-auto">
-            <div className="card text-center border-0 bg-light">
-              <div className="card-body py-2 px-4">
+          <div className="api-test-stat-card">
+            <div className="card text-center border-0 bg-light h-100">
+              <div className="card-body py-2 px-3">
                 <div className="fs-3 fw-bold text-success">{successCount}</div>
                 <small className="text-muted">Passed</small>
               </div>
             </div>
           </div>
-          <div className="col-auto">
-            <div className="card text-center border-0 bg-light">
-              <div className="card-body py-2 px-4">
+          <div className="api-test-stat-card">
+            <div className="card text-center border-0 bg-light h-100">
+              <div className="card-body py-2 px-3">
                 <div className="fs-3 fw-bold text-danger">{errorCount}</div>
                 <small className="text-muted">Failed</small>
               </div>
             </div>
           </div>
           {loadingCount > 0 && (
-            <div className="col-auto">
-              <div className="card text-center border-0 bg-light">
-                <div className="card-body py-2 px-4">
-                  <div className="fs-3 fw-bold text-secondary">{loadingCount}</div>
+            <div className="api-test-stat-card">
+              <div className="card text-center border-0 bg-light h-100">
+                <div className="card-body py-2 px-3">
+                  <div className="fs-3 fw-bold text-secondary">
+                    {loadingCount}
+                  </div>
                   <small className="text-muted">Pending</small>
                 </div>
               </div>
@@ -211,7 +223,9 @@ export default function ApiTestPage() {
 
       {results.length === 0 && (
         <div className="text-center py-5 text-muted">
-          <p className="fs-5">Click &quot;Run All Tests&quot; to fire off every GET endpoint.</p>
+          <p className="fs-5">
+            Click &quot;Run All Tests&quot; to fire off every GET endpoint.
+          </p>
         </div>
       )}
 
@@ -220,17 +234,23 @@ export default function ApiTestPage() {
         if (groupResults.length === 0) return null;
         return (
           <div key={group} className="mb-4">
-            <h5 className="text-muted border-bottom pb-2 mb-3">{group}</h5>
+            <h5 className="text-muted border-bottom pb-2 mb-3 api-test-group-title">
+              {group}
+            </h5>
             <div className="row g-3">
               {groupResults.map((r) => {
                 const desc = tests.find((t) => t.name === r.name);
                 return (
-                  <div key={r.name} className="col-md-6 col-lg-4">
+                  <div key={r.name} className="col-12 col-md-6 col-lg-4">
                     <div className="card h-100">
                       <div className="card-body">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <h6 className="card-title mb-0">{r.name}</h6>
-                          <span className={`badge ${statusBadge(r.status)}`}>
+                        <div className="api-test-card-head mb-2">
+                          <h6 className="card-title mb-0 api-test-card-title">
+                            {r.name}
+                          </h6>
+                          <span
+                            className={`badge flex-shrink-0 ${statusBadge(r.status)}`}
+                          >
                             {r.status === 'loading' ? (
                               <span
                                 className="spinner-border spinner-border-sm"
@@ -243,7 +263,10 @@ export default function ApiTestPage() {
                         </div>
 
                         {desc && (
-                          <small className="text-muted d-block mb-2" style={{ fontSize: '0.75rem' }}>
+                          <small
+                            className="text-muted d-block mb-2"
+                            style={{ fontSize: '0.75rem' }}
+                          >
                             GET {desc.path}
                           </small>
                         )}
@@ -253,19 +276,22 @@ export default function ApiTestPage() {
                             <p className="card-text text-success mb-1">
                               {itemCount(r.data)}
                               {r.durationMs != null && (
-                                <span className="text-muted ms-2">({r.durationMs}ms)</span>
+                                <span className="text-muted ms-2">
+                                  ({r.durationMs}ms)
+                                </span>
                               )}
                             </p>
                             <button
-                              className="btn btn-sm btn-outline-secondary"
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary api-test-toggle-btn"
                               onClick={() => toggle(r.name)}
                             >
                               {expanded.has(r.name) ? 'Hide' : 'Show'} Response
                             </button>
                             {expanded.has(r.name) && (
                               <pre
-                                className="mt-2 p-2 bg-light rounded small"
-                                style={{ maxHeight: 300, overflow: 'auto' }}
+                                className="mt-2 p-2 bg-light rounded small api-test-json"
+                                style={{ maxHeight: 300 }}
                               >
                                 {truncatedJson(r.data)}
                               </pre>
@@ -277,7 +303,9 @@ export default function ApiTestPage() {
                           <p className="card-text text-danger mb-0">
                             {r.error}
                             {r.durationMs != null && (
-                              <span className="text-muted ms-2">({r.durationMs}ms)</span>
+                              <span className="text-muted ms-2">
+                                ({r.durationMs}ms)
+                              </span>
                             )}
                           </p>
                         )}
