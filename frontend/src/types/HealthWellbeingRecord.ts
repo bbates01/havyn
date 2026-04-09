@@ -1,0 +1,16 @@
+export interface HealthWellbeingRecord {
+  healthRecordId: number,
+  residentId: number,
+  recordDate: string,
+  generalHealthScore: number,
+  nutritionScore: number,
+  sleepQualityScore: number,
+  energyLevelScore: number,
+  heightCm: number,
+  weightKg: number,
+  bmi: number,
+  medicalCheckupDone: boolean,
+  dentalCheckupDone: boolean,
+  psychologicalCheckupDone: boolean,
+  notes?: string | null,
+}
