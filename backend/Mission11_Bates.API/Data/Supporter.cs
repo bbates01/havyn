@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Identity;
 
 namespace Mission11_Bates.Data
 {
@@ -35,6 +34,6 @@ namespace Mission11_Bates.Data
         public string? UserId { get; set; }
         
         [ForeignKey("UserId")]
-        public IdentityUser? User { get; set; }
+        public ApplicationUser? User { get; set; }
     }
 }

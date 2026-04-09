@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mission11_Bates.Data;
 
@@ -5,6 +6,7 @@ namespace Mission11_Bates.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "CaseAccess")]
     public class ResidentsController : ControllerBase
     {
         private HavynDbContext _context;

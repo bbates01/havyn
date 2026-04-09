@@ -51,6 +51,7 @@ const tests: TestDescriptor[] = [
 
 async function callEndpoint(path: string): Promise<unknown> {
   const res = await fetch(`${BASE_URL}${path}`, {
+    credentials: 'include',
     headers: { Accept: 'application/json' },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

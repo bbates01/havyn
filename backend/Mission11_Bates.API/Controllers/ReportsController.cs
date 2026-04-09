@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mission11_Bates.Data;
 
@@ -15,6 +16,7 @@ namespace Mission11_Bates.Controllers
         // ── Reports (Admin TAB 5) ──
 
         [HttpGet("ResidentOutcomes")]
+        [Authorize(Policy = "InternalStaff")]
         public IActionResult GetResidentOutcomes(string? startDate = null, string? endDate = null, string format = "json")
         {
             var residentsQuery = _context.Residents.Where(r => r.CaseStatus == "Active").AsQueryable();
@@ -60,6 +62,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpGet("ServicesProvided")]
+        [Authorize(Policy = "InternalStaff")]
         public IActionResult GetServicesProvided(string? startDate = null, string? endDate = null, string format = "json")
         {
             var caringCount = _context.HomeVisitations.Count();
@@ -93,6 +96,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpGet("SafehouseComparison")]
+        [Authorize(Policy = "InternalStaff")]
         public IActionResult GetSafehouseComparison(string format = "json")
         {
             var metrics = _context.SafehouseMonthlyMetrics.ToList();
@@ -124,6 +128,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpGet("DonationTrends")]
+        [Authorize(Policy = "InternalStaff")]
         public IActionResult GetDonationTrends(string format = "json")
         {
             var donations = _context.Donations.ToList();
@@ -177,6 +182,7 @@ namespace Mission11_Bates.Controllers
         // ── Dashboard Summaries ──
 
         [HttpGet("AdminDashboardSummary")]
+        [Authorize(Policy = "InternalStaff")]
         public IActionResult GetAdminDashboardSummary()
         {
             var totalActiveResidents = _context.Residents.Count(r => r.CaseStatus == "Active");
@@ -196,6 +202,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpGet("ManagerDashboardSummary")]
+        [Authorize(Policy = "InternalStaff")]
         public IActionResult GetManagerDashboardSummary(int safehouseId)
         {
             var activeResidents = _context.Residents.Count(r => r.SafehouseId == safehouseId && r.CaseStatus == "Active");
@@ -211,6 +218,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpGet("StaffDashboardSummary")]
+        [Authorize(Policy = "InternalStaff")]
         public IActionResult GetStaffDashboardSummary(string staffUserId)
         {
             var assignedCaseload = _context.Residents.Count(r => r.AssignedSocialWorker == staffUserId && r.CaseStatus == "Active");
@@ -224,6 +232,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpGet("DonorDashboardSummary")]
+        [Authorize(Policy = "DonorAccess")]
         public IActionResult GetDonorDashboardSummary(int supporterId)
         {
             var donations = _context.Donations.Where(d => d.SupporterId == supporterId).ToList();
@@ -240,6 +249,7 @@ namespace Mission11_Bates.Controllers
         // ── Public ──
 
         [HttpGet("PublicImpact")]
+        [AllowAnonymous]
         public IActionResult GetPublicImpact()
         {
             var snapshots = _context.PublicImpactSnapshots
