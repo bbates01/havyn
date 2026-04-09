@@ -30,5 +30,9 @@ namespace Mission11_Bates.Data
         public DateOnly? FirstDonationDate { get; set; }
         [Required]
         public string AcquisitionChannel { get; set; }
+        public string? UserId { get; set; }
+        
+        [ForeignKey("UserId")]
+        public IdentityUser? User { get; set; }
     }
 }
