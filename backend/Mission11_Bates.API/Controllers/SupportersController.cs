@@ -3,7 +3,7 @@ using Mission11_Bates.Data;
 
 namespace Mission11_Bates.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class SupportersController : ControllerBase
     {
