@@ -28,10 +28,6 @@ namespace Mission11_Bates.Controllers
             {
                 query = query.Where(r => caseStatuses.Contains(r.CaseStatus));
             }
-            else
-            {
-                query = query.Where(r => r.CaseStatus == "Active" || r.CaseStatus == "Transferred");
-            }
 
             if (riskLevels != null && riskLevels.Any())
             {
