@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login, getCurrentUser } from '../api/authApi';
+import { login } from '../api/authApi';
+import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
 function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { refreshAuth } = useAuth();
 
   useEffect(() => {
     document.title = 'Log In | Havyn';
@@ -25,16 +27,15 @@ function LoginPage() {
     try {
       await login(email, password);
 
-      // Fetch identity and redirect by role
-      const user = await getCurrentUser();
+      const user = await refreshAuth();
 
-      if (user.roles.includes('Admin')) {
+      if (user?.roles.includes('Admin')) {
         navigate('/admin');
-      } else if (user.roles.includes('Manager')) {
+      } else if (user?.roles.includes('Manager')) {
         navigate('/manager');
-      } else if (user.roles.includes('SocialWorker')) {
+      } else if (user?.roles.includes('SocialWorker')) {
         navigate('/staff');
-      } else if (user.roles.includes('Donor')) {
+      } else if (user?.roles.includes('Donor')) {
         navigate('/donor');
       } else {
         navigate('/');

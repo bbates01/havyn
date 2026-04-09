@@ -91,6 +91,26 @@
   color: var(--primary);
 }
 
+.navbar-logout-btn {
+  display: flex;
+  align-items: center;
+  padding: 0 1.15rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.navbar-logout-btn:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
 .navbar-toggler {
   display: none;
   border: none;
@@ -141,7 +161,8 @@
     width: 100%;
   }
 
-  .navbar-links a {
+  .navbar-links a,
+  .navbar-logout-btn {
     width: 100%;
     padding: 0.75rem 1rem;
     border-radius: 0;
