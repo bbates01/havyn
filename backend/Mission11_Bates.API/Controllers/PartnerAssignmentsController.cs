@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mission11_Bates.Data;
 
@@ -5,6 +6,7 @@ namespace Mission11_Bates.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "InternalStaff")]
     public class PartnerAssignmentsController : ControllerBase
     {
         private HavynDbContext _context;
@@ -45,6 +47,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPost("AddAssignment")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult AddAssignment([FromBody] PartnerAssignment newAssignment)
         {
             _context.PartnerAssignments.Add(newAssignment);
@@ -53,6 +56,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdateAssignment/{assignmentId}")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult UpdateAssignment(int assignmentId, [FromBody] PartnerAssignment updatedAssignment)
         {
             var existing = _context.PartnerAssignments.Find(assignmentId);
