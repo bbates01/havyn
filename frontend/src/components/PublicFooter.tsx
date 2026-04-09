@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function PublicFooter() {
+  const { isAuthenticated, loading } = useAuth();
+
   return (
     <footer className="public-footer">
       <div className="footer-grid">
@@ -22,9 +25,11 @@ function PublicFooter() {
             <li>
               <Link to="/donor-impact">Donor Impact</Link>
             </li>
-            <li>
-              <Link to="/login">Log In</Link>
-            </li>
+            {!loading && !isAuthenticated && (
+              <li>
+                <Link to="/login">Log In</Link>
+              </li>
+            )}
           </ul>
         </div>
 
