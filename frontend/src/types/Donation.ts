@@ -1,0 +1,15 @@
+export interface Donation {
+  donationId: number,
+  supporterId: number,
+  donationType: string,
+  donationDate: string,
+  isRecurring: boolean,
+  campaignName?: string | null,
+  channelSource: string,
+  currencyCode?: string | null,
+  amount?: number | null,
+  estimatedValue: number,
+  impactUnit: string,
+  notes?: string | null,
+  referralPostId?: number | null,
+}

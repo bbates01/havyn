@@ -1,0 +1,16 @@
+export interface HomeVisitation {
+  visitationId: number,
+  residentId: number,
+  visitDate: string,
+  socialWorker: string,
+  visitType: string,
+  locationVisited: string,
+  familyMembersPresent: string,
+  purpose: string,
+  observations: string,
+  familyCooperationLevel: string,
+  safetyConcernsNoted: boolean,
+  followUpNeeded: boolean,
+  followUpNotes?: string | null,
+  visitOutcome: string,
+}
