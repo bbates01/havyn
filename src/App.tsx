@@ -35,6 +35,8 @@ function App() {
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
             </Route>
+            {/* Dashboard — will move behind auth guard once auth is wired */}
+            <Route path="/dashboard" element={<DashboardPage />} />
             {/* Authenticated dashboard routes will be added here */}
           </Routes>
         </Suspense>
