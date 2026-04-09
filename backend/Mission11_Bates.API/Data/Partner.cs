@@ -1,0 +1,30 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace Mission11_Bates.Data
+{
+    public class Partner
+    {
+        [Key]
+        public int PartnerId { get; set; }
+        [Required]
+        public string PartnerName { get; set; }
+        [Required]
+        public string PartnerType { get; set; }
+        [Required]
+        public string RoleType { get; set; }
+        [Required]
+        public string ContactName { get; set; }
+        [Required]
+        public string Email { get; set; }
+        [Required]
+        public string Phone { get; set; }
+        [Required]
+        public string Region { get; set; }
+        [Required]
+        public string Status { get; set; }
+        [Required]
+        public DateOnly StartDate { get; set; }
+        public DateOnly? EndDate { get; set; }
+        public string? Notes { get; set; }
+    }
+}

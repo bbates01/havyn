@@ -1,17 +1,18 @@
-using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<BookDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("BookConnection")));
+builder.Services.AddDbContext<HavynDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // enable cors for frontend communication
 builder.Services.AddCors(options => 
@@ -24,10 +25,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// map openapi endpoint in development environement (note typo is intentional)
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // allow frontend on localhost:3000 to access this api
