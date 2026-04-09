@@ -1,16 +1,17 @@
 :root {
-  --primary: #4f46e5;
-  --primary-soft: rgba(79, 70, 229, 0.15);
-  --primary-dark: #3730a3;
-  --accent: #ec4899;
+  --primary: #0d7377;
+  --primary-soft: rgba(13, 115, 119, 0.12);
+  --primary-dark: #095456;
+  --accent: #d4a843;
+  --accent-soft: rgba(212, 168, 67, 0.15);
   --text: #1f2933;
   --muted: #6b7280;
-  --surface: #f6f5fb;
+  --surface: #f7f8f6;
   --panel: #ffffff;
-  --border: rgba(15, 23, 42, 0.12);
-  --glass: rgba(255, 255, 255, 0.9);
-  --shadow: 0 20px 30px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 35px 45px rgba(15, 23, 42, 0.18);
+  --border: rgba(15, 23, 42, 0.10);
+  --glass: rgba(255, 255, 255, 0.92);
+  --shadow: 0 20px 30px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 35px 45px rgba(15, 23, 42, 0.14);
 
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text);

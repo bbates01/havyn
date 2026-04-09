@@ -28,5 +28,6 @@ namespace Mission11_Bates.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<TodoItem> TodoItems { get; set; }
+        public DbSet<ResidentPrediction> ResidentPredictions { get; set; }
     }
 }

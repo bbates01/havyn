@@ -1,71 +1,25 @@
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
-// import context for managing shopping cart state
-import { CartProvider } from './context/CartContext';
-import BooksPage from './pages/BooksPage';
-import CartDrawer from './pages/CartPage';
-import PurchasePage from './pages/PurchasePage';
-import CartSummary from './components/CartSummary';
-import AdminBooksPage from './pages/AdminBooksPage';
+import PublicLayout from './layouts/PublicLayout';
+import LandingPage from './pages/LandingPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import LoginPage from './pages/LoginPage';
+import DonorImpactPage from './pages/DonorImpactPage';
 
 function App() {
   return (
-    <CartProvider>
-      <Router>
-        <div className="app-shell">
-          {/* main application header with branding and navigation */}
-          <header className="site-header">
-            <div className="brand">
-              <div className="brand-icon">MB</div>
-              <div>
-                <p className="eyebrow text-muted mb-1">Mission 13 Bookstore</p>
-              </div>
-            </div>
-            <nav className="main-nav" aria-label="Primary Navigation">
-              <NavLink to="/" end>
-                Books
-              </NavLink>
-              <CartSummary />
-            </nav>
-          </header>
-
-          <main className="site-main">
-            {/* route for pages based on url path */}
-            <Routes>
-              <Route path="/" element={<BooksPage />} />
-              <Route path="/books" element={<BooksPage />} />
-              <Route path="/purchase/:title/:bookId/:price" element={<PurchasePage />} />
-              <Route path="/adminbooks" element={<AdminBooksPage />} />
-            </Routes>
-          </main>
-
-          <footer className="site-footer">
-            <small>© {new Date().getFullYear()} Mission 13 Bookstore · Built with React & Bootstrap</small>
-          </footer>
-          
-          {/* toast container for showing cart notification pop-ups */}
-          <div className="toast-container position-fixed bottom-0 end-0 p-3">
-            <div
-              id="cartToast"
-              className="toast"
-              role="alert"
-              aria-live="assertive"
-              aria-atomic="true"
-            >
-              <div className="toast-header">
-                <strong className="me-auto">Cart updated</strong>
-                <button type="button" className="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-              </div>
-              <div className="toast-body" id="cartToastBody">
-                {/* Filled at runtime */}
-              </div>
-            </div>
-          </div>
-
-          <CartDrawer />
-        </div>
-      </Router>
-    </CartProvider>
+    <Router>
+      <Routes>
+        {/* Public routes with shared navbar / footer */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/donor-impact" element={<DonorImpactPage />} />
+        </Route>
+        {/* Authenticated dashboard routes will be added here */}
+      </Routes>
+    </Router>
   );
 }
 
