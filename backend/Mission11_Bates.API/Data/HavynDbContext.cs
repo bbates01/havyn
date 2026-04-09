@@ -29,5 +29,16 @@ namespace Mission11_Bates.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<TodoItem> TodoItems { get; set; }
         public DbSet<ResidentPrediction> ResidentPredictions { get; set; }
+        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Supporter>()
+                .HasOne(s => s.User)
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+        }
     }
 }
