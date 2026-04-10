@@ -1,9 +1,8 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function DashboardLayout() {
   const { user } = useAuth();
-  const { pathname } = useLocation();
 
   const role: 'admin' | 'manager' | 'staff' | null = user?.roles.includes('Admin')
     ? 'admin'
@@ -21,8 +20,9 @@ function DashboardLayout() {
 
   const dashPath = base;
   const caseloadPath = `${base}/caseload`;
+  const reportsPath = `${base}/reports`;
 
-  const isCaseload = pathname.endsWith('/caseload');
+  const showReportsTab = role === 'admin' || role === 'manager';
 
   return (
     <>
@@ -30,21 +30,38 @@ function DashboardLayout() {
         <div className="container-fluid px-3 px-md-4">
           <ul className="nav nav-tabs border-0 pt-2">
             <li className="nav-item">
-              <Link
-                className={`nav-link ${!isCaseload ? 'active fw-semibold' : 'text-muted'}`}
+              <NavLink
+                end
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                }
                 to={dashPath}
               >
                 Dashboard
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link
-                className={`nav-link ${isCaseload ? 'active fw-semibold' : 'text-muted'}`}
+              <NavLink
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                }
                 to={caseloadPath}
               >
                 Caseload
-              </Link>
+              </NavLink>
             </li>
+            {showReportsTab && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={reportsPath}
+                >
+                  Reports and Analytics
+                </NavLink>
+              </li>
+            )}
           </ul>
         </div>
       </nav>
