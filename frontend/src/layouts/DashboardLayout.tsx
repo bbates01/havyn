@@ -1,9 +1,9 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink} from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function DashboardLayout() {
   const { user } = useAuth();
-  const { pathname } = useLocation();
+  // const { pathname } = useLocation();
 
   const role: 'admin' | 'manager' | 'staff' | null = user?.roles.includes('Admin')
     ? 'admin'
