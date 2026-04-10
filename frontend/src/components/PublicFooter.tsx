@@ -1,44 +1,77 @@
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
 
 function PublicFooter() {
-  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+
+  if (isLoginPage) {
+    return null;
+  }
 
   return (
     <footer className="public-footer">
+      <h2 className="footer-title">Learn More About Us</h2>
       <div className="footer-grid">
-        <div className="footer-brand">
-          <h3>Havyn</h3>
-          <p>
-            Providing safe homes and brighter futures for girls who are survivors
-            of abuse and trafficking in the Philippines. Every child deserves
-            safety, healing, and hope.
-          </p>
+        <div className="footer-links">
+          <h4>About Us</h4>
+          <ul>
+            <li><span>Who We Are</span></li>
+            <li><span>Our History</span></li>
+            <li><span>What We Believe</span></li>
+            <li><span>What We Do</span></li>
+            <li><span>Leadership</span></li>
+          </ul>
         </div>
 
         <div className="footer-links">
-          <h4>Navigate</h4>
+          <h4>Programs</h4>
+          <ul>
+            <li><span>Safe Homes</span></li>
+            <li><span>Healing Services</span></li>
+            <li><span>Education Support</span></li>
+            <li><span>Legal Advocacy</span></li>
+            <li><span>Family Reintegration</span></li>
+          </ul>
+        </div>
+
+        <div className="footer-links">
+          <h4>Impact</h4>
+          <ul>
+            <li>
+              <Link to="/donor-impact">Donor Impact</Link>
+            </li>
+            <li><span>Stories of Hope</span></li>
+            <li><span>Annual Results</span></li>
+            <li><span>Global Supporters</span></li>
+            <li><span>Partner Network</span></li>
+          </ul>
+        </div>
+
+        <div className="footer-links">
+          <h4>Resources</h4>
+          <ul>
+            <li><span>Newsroom</span></li>
+            <li><span>Events</span></li>
+            <li><span>Volunteer Guide</span></li>
+            <li><span>Donor FAQ</span></li>
+            <li><span>Contact Support</span></li>
+          </ul>
+        </div>
+
+        <div className="footer-links">
+          <h4>Quick Links</h4>
           <ul>
             <li>
               <Link to="/">Home</Link>
             </li>
             <li>
-              <Link to="/donor-impact">Donor Impact</Link>
+              <Link to="/login">Donate</Link>
             </li>
-            {!loading && !isAuthenticated && (
-              <li>
-                <Link to="/login">Log In</Link>
-              </li>
-            )}
-          </ul>
-        </div>
-
-        <div className="footer-links">
-          <h4>Legal</h4>
-          <ul>
             <li>
               <Link to="/privacy">Privacy Policy</Link>
             </li>
+            <li><span>Terms of Use</span></li>
+            <li><span>Safeguarding Policy</span></li>
           </ul>
         </div>
       </div>

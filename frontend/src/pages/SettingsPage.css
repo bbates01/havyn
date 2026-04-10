@@ -1,0 +1,210 @@
+.settings-page {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 3.5rem);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.settings-container {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.settings-card {
+  background: var(--panel);
+  border-radius: 18px;
+  padding: clamp(1.75rem, 4vw, 2.25rem);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.settings-card h2 {
+  font-size: clamp(1.35rem, 3vw, 1.6rem);
+  color: var(--primary-dark);
+  margin-bottom: 1.25rem;
+}
+
+.settings-card h3 {
+  font-size: 1.1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ─── Account info ──────────────────────────────────────── */
+
+.settings-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.settings-info-row:last-child {
+  border-bottom: none;
+}
+
+.settings-info-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-info-value {
+  color: var(--muted);
+  text-align: right;
+}
+
+.settings-role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--primary);
+  color: #fff;
+  margin-left: 0.35rem;
+}
+
+/* ─── MFA section (moved from ManageMfaPage) ────────────── */
+
+.mfa-message {
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.mfa-message--success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.mfa-message--error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.mfa-status-text {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-bottom: 1rem;
+}
+
+.mfa-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.mfa-field input {
+  width: 100%;
+  max-width: 100%;
+  min-height: 48px;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: max(1rem, 16px);
+  box-sizing: border-box;
+}
+
+.mfa-btn {
+  min-height: 44px;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.mfa-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.mfa-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mfa-btn--secondary {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+
+.mfa-btn--secondary:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.mfa-btn--link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 0.75rem;
+}
+
+.mfa-qr {
+  display: block;
+  margin: 1rem auto;
+  width: 200px;
+  height: 200px;
+}
+
+.mfa-manual-key {
+  font-size: 0.85rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.mfa-recovery-codes {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin: 1rem 0;
+}
+
+.mfa-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 480px) {
+  .settings-page {
+    padding-top: clamp(1.25rem, 5vw, 2rem);
+    align-items: stretch;
+  }
+
+  .settings-card {
+    border-radius: 14px;
+    padding: clamp(1.35rem, 4vw, 1.75rem);
+  }
+}
