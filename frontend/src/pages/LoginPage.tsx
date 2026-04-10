@@ -7,7 +7,6 @@ import './LoginPage.css';
 function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const navigate = useNavigate();
@@ -48,7 +47,7 @@ function LoginPage() {
 
     setLoading(true);
     try {
-      const data = await login(email, password, rememberMe);
+      const data = await login(email, password);
 
       if (data.requiresMfa) {
         setMfaRequired(true);
@@ -72,9 +71,9 @@ function LoginPage() {
 
     try {
       if (useRecoveryCode) {
-        await verifyRecoveryCode(mfaCode, rememberMe);
+        await verifyRecoveryCode(mfaCode);
       } else {
-        await verifyMfa(mfaCode, rememberMe);
+        await verifyMfa(mfaCode);
       }
       await completeLogin();
     } catch (err: unknown) {
@@ -247,15 +246,6 @@ function LoginPage() {
               </button>
             </div>
           </div>
-
-          <label className="login-remember">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-            />
-            Remember me
-          </label>
 
           <button
             type="submit"
