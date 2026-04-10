@@ -36,6 +36,33 @@ export function register(data: RegisterDonorPayload) {
   });
 }
 
+export interface CreateStaffUserPayload {
+  email: string;
+  password: string;
+  role: string;
+  displayName?: string;
+  safehouseId?: number;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  region?: string;
+  country?: string;
+  supporterType?: string;
+  organizationName?: string;
+}
+
+export interface CreateStaffUserResponse {
+  message?: string;
+  socialWorkerCode?: string;
+}
+
+export function createStaffUser(data: CreateStaffUserPayload) {
+  return apiFetch<CreateStaffUserResponse>('/api/auth/create-user', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export function logout() {
   return apiFetch<void>('/api/auth/logout', { method: 'POST' });
 }

@@ -48,6 +48,226 @@ namespace Mission11_Bates.Controllers
             if (dto == null)
                 return BadRequest(new { message = "Invalid registration data." });
 
+            var donorResult = await CreateDonorAccountWithoutSignInAsync(dto, acquisitionChannel: "Web");
+            if (donorResult.Error != null)
+                return donorResult.Error;
+
+            await _signInManager.PasswordSignInAsync(
+                donorResult.User!, dto.Password, isPersistent: false, lockoutOnFailure: false);
+
+            return Ok(new { message = "Registration successful." });
+        }
+
+        // POST /api/auth/create-user — Admin or Manager (Managers cannot create Admins or Managers)
+        [HttpPost("create-user")]
+        [Authorize(Policy = "StaffManagement")]
+        public async Task<IActionResult> CreateUser([FromBody] CreateStaffUserDto? dto)
+        {
+            if (dto == null)
+                return BadRequest(new { message = "Invalid request body." });
+
+            var caller = await _userManager.GetUserAsync(User);
+            if (caller == null)
+                return Unauthorized();
+
+            var callerRoles = await _userManager.GetRolesAsync(caller);
+            var callerIsAdmin = callerRoles.Contains("Admin");
+            var callerIsManager = callerRoles.Contains("Manager");
+
+            var email = dto.Email?.Trim() ?? "";
+            var password = dto.Password ?? "";
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                return BadRequest(new { message = "Email and password are required." });
+
+            if (await _userManager.FindByEmailAsync(email) != null)
+                return BadRequest(new { message = "An account with this email already exists." });
+
+            var roleNorm = NormalizeStaffRole(dto.Role);
+            if (roleNorm == null)
+                return BadRequest(new { message = "Role must be Admin, Manager, SocialWorker, or Donor." });
+
+            if (roleNorm == "Admin" && !callerIsAdmin)
+                return StatusCode(403, new { message = "Only administrators can create admin accounts." });
+
+            if (roleNorm == "Manager" && callerIsManager && !callerIsAdmin)
+                return StatusCode(403, new { message = "Managers cannot create manager accounts." });
+
+            switch (roleNorm)
+            {
+                case "Donor":
+                    {
+                        var donorDto = new RegisterDonorDto
+                        {
+                            Email = email,
+                            Password = password,
+                            FirstName = dto.FirstName ?? "",
+                            LastName = dto.LastName ?? "",
+                            Phone = dto.Phone ?? "",
+                            Region = dto.Region ?? "",
+                            Country = dto.Country ?? "",
+                            SupporterType = dto.SupporterType,
+                            OrganizationName = dto.OrganizationName,
+                        };
+                        var donorResult = await CreateDonorAccountWithoutSignInAsync(donorDto, acquisitionChannel: "Staff");
+                        if (donorResult.Error != null)
+                            return donorResult.Error;
+                        return Ok(new { message = "User created successfully." });
+                    }
+
+                case "Manager":
+                    {
+                        int? safehouseId = null;
+                        if (callerIsAdmin)
+                        {
+                            if (!dto.SafehouseId.HasValue)
+                                return BadRequest(new { message = "Safehouse is required for manager accounts." });
+                            safehouseId = dto.SafehouseId.Value;
+                            if (!await _db.Safehouses.AnyAsync(s => s.SafehouseId == safehouseId.Value))
+                                return BadRequest(new { message = "Safehouse not found." });
+                        }
+                        else
+                        {
+                            if (caller.SafehouseId == null)
+                                return StatusCode(403, new { message = "Your account is not assigned to a safehouse." });
+                            safehouseId = caller.SafehouseId;
+                        }
+
+                        var displayName = StaffDisplayName(dto.DisplayName, email);
+                        var user = new ApplicationUser
+                        {
+                            UserName = email,
+                            Email = email,
+                            EmailConfirmed = true,
+                            DisplayName = displayName,
+                            SafehouseId = safehouseId,
+                        };
+                        var createResult = await _userManager.CreateAsync(user, password);
+                        if (!createResult.Succeeded)
+                        {
+                            var err = string.Join(" ", createResult.Errors.Select(e => e.Description));
+                            return BadRequest(new { message = string.IsNullOrEmpty(err) ? "Could not create account." : err });
+                        }
+                        await _userManager.AddToRoleAsync(user, "Manager");
+                        return Ok(new { message = "User created successfully." });
+                    }
+
+                case "SocialWorker":
+                    {
+                        var code = await NextSocialWorkerCodeAsync();
+                        for (var attempt = 0; attempt < 8; attempt++)
+                        {
+                            if (!await _userManager.Users.AnyAsync(u => u.SocialWorkerCode == code))
+                                break;
+                            if (!TryParseSwCodeSuffix(code, out var taken))
+                                return BadRequest(new { message = "Could not assign a unique social worker code." });
+                            code = $"SW-{(taken + 1):D2}";
+                        }
+
+                        if (await _userManager.Users.AnyAsync(u => u.SocialWorkerCode == code))
+                            return BadRequest(new { message = "Could not assign a unique social worker code." });
+
+                        var displayName = StaffDisplayName(dto.DisplayName, email);
+                        var user = new ApplicationUser
+                        {
+                            UserName = email,
+                            Email = email,
+                            EmailConfirmed = true,
+                            DisplayName = displayName,
+                            SocialWorkerCode = code,
+                        };
+                        var createResult = await _userManager.CreateAsync(user, password);
+                        if (!createResult.Succeeded)
+                        {
+                            var err = string.Join(" ", createResult.Errors.Select(e => e.Description));
+                            return BadRequest(new { message = string.IsNullOrEmpty(err) ? "Could not create account." : err });
+                        }
+                        await _userManager.AddToRoleAsync(user, "SocialWorker");
+                        return Ok(new { message = "User created successfully.", socialWorkerCode = code });
+                    }
+
+                case "Admin":
+                    {
+                        var displayName = StaffDisplayName(dto.DisplayName, email);
+                        var user = new ApplicationUser
+                        {
+                            UserName = email,
+                            Email = email,
+                            EmailConfirmed = true,
+                            DisplayName = displayName,
+                        };
+                        var createResult = await _userManager.CreateAsync(user, password);
+                        if (!createResult.Succeeded)
+                        {
+                            var err = string.Join(" ", createResult.Errors.Select(e => e.Description));
+                            return BadRequest(new { message = string.IsNullOrEmpty(err) ? "Could not create account." : err });
+                        }
+                        await _userManager.AddToRoleAsync(user, "Admin");
+                        return Ok(new { message = "User created successfully." });
+                    }
+
+                default:
+                    return BadRequest(new { message = "Unsupported role." });
+            }
+        }
+
+        private static string? NormalizeStaffRole(string? role)
+        {
+            if (string.IsNullOrWhiteSpace(role)) return null;
+            var r = role.Trim();
+            if (string.Equals(r, "Admin", StringComparison.OrdinalIgnoreCase)) return "Admin";
+            if (string.Equals(r, "Manager", StringComparison.OrdinalIgnoreCase)) return "Manager";
+            if (string.Equals(r, "SocialWorker", StringComparison.OrdinalIgnoreCase)) return "SocialWorker";
+            if (string.Equals(r, "Donor", StringComparison.OrdinalIgnoreCase)) return "Donor";
+            return null;
+        }
+
+        private static string StaffDisplayName(string? displayName, string email)
+        {
+            var d = displayName?.Trim();
+            if (string.IsNullOrEmpty(d))
+                d = email;
+            return d.Length > 100 ? d[..100] : d;
+        }
+
+        private static bool TryParseSwCodeSuffix(string code, out int n)
+        {
+            n = 0;
+            if (string.IsNullOrWhiteSpace(code)) return false;
+            var t = code.Trim();
+            if (!t.StartsWith("SW-", StringComparison.OrdinalIgnoreCase)) return false;
+            var suffix = t.Length > 3 ? t[3..] : "";
+            return int.TryParse(suffix, out n) && n >= 0;
+        }
+
+        private async Task<string> NextSocialWorkerCodeAsync()
+        {
+            var fromUsers = await _userManager.Users
+                .Where(u => u.SocialWorkerCode != null)
+                .Select(u => u.SocialWorkerCode!)
+                .ToListAsync();
+
+            var fromResidents = await _db.Residents
+                .Where(r => r.AssignedSocialWorker != null)
+                .Select(r => r.AssignedSocialWorker!)
+                .Distinct()
+                .ToListAsync();
+
+            var max = 0;
+            foreach (var c in fromUsers.Concat(fromResidents))
+            {
+                if (TryParseSwCodeSuffix(c, out var n))
+                    max = Math.Max(max, n);
+            }
+
+            var next = max + 1;
+            return $"SW-{next:D2}";
+        }
+
+        /// <summary>Creates supporter + donor user + Donor role. Does not sign in. Returns Error or User.</summary>
+        private async Task<DonorCreateResult> CreateDonorAccountWithoutSignInAsync(
+            RegisterDonorDto dto,
+            string acquisitionChannel)
+        {
             var email = dto.Email?.Trim() ?? "";
             var password = dto.Password ?? "";
             var firstName = dto.FirstName?.Trim() ?? "";
@@ -61,36 +281,35 @@ namespace Mission11_Bates.Controllers
             var organizationName = dto.OrganizationName?.Trim();
 
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-                return BadRequest(new { message = "Email and password are required." });
+                return new DonorCreateResult { Error = BadRequest(new { message = "Email and password are required." }) };
 
             if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
-                return BadRequest(new { message = "First and last name are required." });
+                return new DonorCreateResult { Error = BadRequest(new { message = "First and last name are required." }) };
 
             if (string.IsNullOrEmpty(phone) || string.IsNullOrEmpty(region) || string.IsNullOrEmpty(country))
-                return BadRequest(new { message = "Phone, region, and country are required." });
+                return new DonorCreateResult { Error = BadRequest(new { message = "Phone, region, and country are required." }) };
 
             var isOrg = supporterType.Equals("Organization", StringComparison.OrdinalIgnoreCase);
             if (isOrg && string.IsNullOrEmpty(organizationName))
-                return BadRequest(new { message = "Organization name is required for organization accounts." });
+                return new DonorCreateResult { Error = BadRequest(new { message = "Organization name is required for organization accounts." }) };
 
             if (await _userManager.FindByEmailAsync(email) != null)
-                return BadRequest(new { message = "An account with this email already exists." });
+                return new DonorCreateResult { Error = BadRequest(new { message = "An account with this email already exists." }) };
 
             if (await _db.Supporters.AnyAsync(s => s.Email == email))
-                return BadRequest(new { message = "This email is already registered as a supporter." });
+                return new DonorCreateResult { Error = BadRequest(new { message = "This email is already registered as a supporter." }) };
 
             var supporterDisplayName = isOrg && !string.IsNullOrEmpty(organizationName)
                 ? organizationName
                 : $"{firstName} {lastName}".Trim();
 
             if (string.IsNullOrEmpty(supporterDisplayName))
-                return BadRequest(new { message = "Display name could not be determined." });
+                return new DonorCreateResult { Error = BadRequest(new { message = "Display name could not be determined." }) };
 
             var userDisplayName = supporterDisplayName.Length > 100
                 ? supporterDisplayName[..100]
                 : supporterDisplayName;
 
-            // DB may lack IDENTITY on SupporterId (EF assumes DB-generated keys); assign explicitly.
             var nextSupporterId = await _db.Supporters.AnyAsync()
                 ? await _db.Supporters.MaxAsync(s => s.SupporterId) + 1
                 : 1;
@@ -110,7 +329,7 @@ namespace Mission11_Bates.Controllers
                 Phone = phone,
                 Status = "Active",
                 CreatedAt = DateTime.UtcNow,
-                AcquisitionChannel = "Web",
+                AcquisitionChannel = acquisitionChannel,
             };
 
             _db.Supporters.Add(supporter);
@@ -131,7 +350,10 @@ namespace Mission11_Bates.Controllers
                 _db.Supporters.Remove(supporter);
                 await _db.SaveChangesAsync();
                 var err = string.Join(" ", createResult.Errors.Select(e => e.Description));
-                return BadRequest(new { message = string.IsNullOrEmpty(err) ? "Could not create account." : err });
+                return new DonorCreateResult
+                {
+                    Error = BadRequest(new { message = string.IsNullOrEmpty(err) ? "Could not create account." : err }),
+                };
             }
 
             await _userManager.AddToRoleAsync(user, "Donor");
@@ -139,9 +361,13 @@ namespace Mission11_Bates.Controllers
             supporter.UserId = user.Id;
             await _db.SaveChangesAsync();
 
-            await _signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: false);
+            return new DonorCreateResult { User = user };
+        }
 
-            return Ok(new { message = "Registration successful." });
+        private sealed class DonorCreateResult
+        {
+            public ApplicationUser? User { get; init; }
+            public IActionResult? Error { get; init; }
         }
 
         // POST /api/auth/logout
@@ -203,6 +429,24 @@ namespace Mission11_Bates.Controllers
         public string Phone { get; set; } = "";
         public string Region { get; set; } = "";
         public string Country { get; set; } = "";
+        public string? SupporterType { get; set; }
+        public string? OrganizationName { get; set; }
+    }
+
+    public class CreateStaffUserDto
+    {
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string Role { get; set; } = "";
+        public string? DisplayName { get; set; }
+        public int? SafehouseId { get; set; }
+        public string? SocialWorkerCode { get; set; }
+
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? Phone { get; set; }
+        public string? Region { get; set; }
+        public string? Country { get; set; }
         public string? SupporterType { get; set; }
         public string? OrganizationName { get; set; }
     }
