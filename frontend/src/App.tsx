@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import PublicLayout from './layouts/PublicLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
@@ -13,6 +14,7 @@ const MlTestPage = lazy(() => import('./pages/MlTestPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 function RouteFallback() {
   return (
@@ -35,6 +37,7 @@ function App() {
               <Route path="/donor-impact" element={<DonorImpactPage />} />
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
+              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route element={<DashboardLayout />}>
                 <Route path="/admin" element={<DashboardPage />} />
                 <Route path="/admin/caseload" element={<CaseloadPage />} />

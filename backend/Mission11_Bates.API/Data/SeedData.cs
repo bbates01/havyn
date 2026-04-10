@@ -21,6 +21,23 @@ namespace Mission11_Bates.Data
             // 2. Admin (1 account)
             await CreateUser(userManager, "admin@havyn.org", "Admin2026!Havyn", "Admin");
 
+            // 2b. MFA test account — graders see the TOTP prompt but use admin@havyn.org to log in
+            var mfaUser = await CreateUser(userManager, "mfa-test@havyn.org", "MfaTest2026!Havyn", "Donor");
+            if (mfaUser != null)
+            {
+                var key = await userManager.GetAuthenticatorKeyAsync(mfaUser);
+                if (key == null)
+                {
+                    await userManager.ResetAuthenticatorKeyAsync(mfaUser);
+                    key = await userManager.GetAuthenticatorKeyAsync(mfaUser);
+                }
+                if (!await userManager.GetTwoFactorEnabledAsync(mfaUser))
+                {
+                    await userManager.SetTwoFactorEnabledAsync(mfaUser, true);
+                    Console.WriteLine($"[SeedData] MFA enabled for mfa-test@havyn.org — authenticator key: {key}");
+                }
+            }
+
             // 3. Managers (1 per safehouse)
             var safehouses = db.Safehouses.ToList();
             foreach (var sh in safehouses)
