@@ -508,6 +508,11 @@
   transition: color 0.25s ease, background 0.25s ease;
 }
 
+.pillar-icon-svg {
+  width: 26px;
+  height: 26px;
+}
+
 .pillar-card:hover .pillar-icon {
   background: var(--accent-soft);
   color: var(--accent);

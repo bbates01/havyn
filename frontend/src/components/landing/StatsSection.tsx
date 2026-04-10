@@ -15,7 +15,7 @@ const STATS = [
   },
   {
     key: 'girls',
-    number: '77',
+    number: '60',
     desc: 'Girls currently in our care',
     icon: (
       <svg viewBox="0 0 24 24" className="stat-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
