@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Havyn favicon">
+  <rect x="8" y="8" width="48" height="48" rx="12" fill="#f3ece0" />
+  <text
+    x="32"
+    y="42"
+    text-anchor="middle"
+    font-family="Inter, Segoe UI, Arial, sans-serif"
+    font-size="28"
+    font-weight="700"
+    fill="#6b4830"
+  >H</text>
+</svg>

@@ -49,7 +49,7 @@ if (string.IsNullOrWhiteSpace(defaultConnectionString) ||
     string.Equals(defaultConnectionString, "SET_IN_AZURE_APP_SERVICE", StringComparison.OrdinalIgnoreCase))
 {
     throw new InvalidOperationException(
-        "Database connection string is not configured. Set ConnectionStrings:DefaultConnection (Azure) or DATABASE_URL (local).");
+        "Database connection string is not configured. Set ConnectionStrings:DefaultConnection (Azure) or DATABASE_URL (local).");
 }
 
 builder.Services.AddDbContext<HavynDbContext>(options => options.UseNpgsql(defaultConnectionString));
@@ -75,7 +75,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.None; // Required for cross-origin cookie auth
+    options.Cookie.SameSite = SameSiteMode.Lax; // Same-origin now, Lax is correct and more secure
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
@@ -96,7 +96,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorUserIdScheme, options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SameSite = SameSiteMode.Lax; // Same-origin now
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
@@ -112,7 +112,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("StaffAccountManagement", p => p.RequireRole("Admin", "Manager"));
 });
 
-// CORS
+// CORS — no longer needed for the SPA since it's same-origin,
+// but keeping it in case you still need it for local dev or other clients.
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactAppBlah",
         policy =>
@@ -134,12 +135,22 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHttpsRedirection();
+
 app.UseCors("AllowReactAppBlah");
 
-app.UseAuthentication();  // NEW — must come before UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 
+// Serve the React SPA from wwwroot
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
+
+// SPA fallback — any route that doesn't match a file or API endpoint serves index.html
+// so React Router can handle client-side routing. MUST be after MapControllers.
+app.MapFallbackToFile("index.html");
 
 // Seed roles and users on startup; ensure additive columns exist when EF migration history is behind deployment.
 using (var scope = app.Services.CreateScope())
