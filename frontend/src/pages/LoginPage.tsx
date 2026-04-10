@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { login, verifyMfa, verifyRecoveryCode } from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
@@ -8,12 +8,16 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { refreshAuth } = useAuth();
 
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const fromDonate = searchParams.get('from') === 'donate';
+  const showDonateBanner = fromDonate && !bannerDismissed;
 
   useEffect(() => {
     document.title = 'Log In | Havyn';
@@ -84,7 +88,26 @@ function LoginPage() {
   if (mfaRequired) {
     return (
       <div className="login-page">
-        <div className="login-card">
+        <div className="login-stack">
+          {showDonateBanner && (
+            <div className="login-donate-banner" role="status" aria-live="polite">
+              <span className="login-donate-banner-icon" aria-hidden="true">ℹ</span>
+              <p>
+                To complete your donation, please log in to your Havyn account
+                or create a free account below. Donor accounts allow us to send
+                your tax receipt and track your giving history.
+              </p>
+              <button
+                type="button"
+                className="login-donate-banner-close"
+                onClick={() => setBannerDismissed(true)}
+                aria-label="Dismiss donation info"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          <div className="login-card">
           <h1>Two-Factor Authentication</h1>
           <p className="login-lede">
             {useRecoveryCode
@@ -146,13 +169,33 @@ function LoginPage() {
             </button>
           </p>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="login-page">
-      <div className="login-card">
+      <div className="login-stack">
+        {showDonateBanner && (
+          <div className="login-donate-banner" role="status" aria-live="polite">
+            <span className="login-donate-banner-icon" aria-hidden="true">ℹ</span>
+            <p>
+              To complete your donation, please log in to your Havyn account or
+              create a free account below. Donor accounts allow us to send your
+              tax receipt and track your giving history.
+            </p>
+            <button
+              type="button"
+              className="login-donate-banner-close"
+              onClick={() => setBannerDismissed(true)}
+              aria-label="Dismiss donation info"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <div className="login-card">
         <h1>Log in</h1>
         <p className="login-lede">
           Access your Havyn account to manage donations and preferences.
@@ -217,6 +260,7 @@ function LoginPage() {
           {' · '}
           Learn more on our <Link to="/">home page</Link>.
         </p>
+      </div>
       </div>
     </div>
   );
