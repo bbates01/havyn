@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const FaqPage = lazy(() => import('./pages/FaqPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignUpPage = lazy(() => import('./pages/SignUpPage'));
@@ -46,6 +47,7 @@ function App() {
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/faq" element={<FaqPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />

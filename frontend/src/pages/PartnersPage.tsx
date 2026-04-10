@@ -954,7 +954,8 @@ export default function PartnersPage() {
             {isAdmin && (
               <button
                 type="button"
-                className="btn btn-primary btn-sm"
+                className="btn btn-sm"
+                style={{ backgroundColor: '#4A6FA5', borderColor: '#4A6FA5', color: '#fff' }}
                 onClick={() => {
                   resetNewModal();
                   setNewModalOpen(true);

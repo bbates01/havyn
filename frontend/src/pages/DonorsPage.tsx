@@ -77,6 +77,7 @@ const ITEM_CATEGORIES = [
 ] as const;
 
 const INTENDED_USES = ['Meals', 'Education', 'Shelter', 'Hygiene', 'Health'] as const;
+const THEME_BLUE = '#4A6FA5';
 
 const RECEIVED_CONDITIONS = ['New', 'Good', 'Fair'] as const;
 
@@ -1025,7 +1026,12 @@ export default function DonorsPage() {
         <li className="nav-item">
           <button
             type="button"
-            className={`nav-link ${mainTab === 'supporters' ? 'active' : ''}`}
+            className="nav-link"
+            style={
+              mainTab === 'supporters'
+                ? { backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }
+                : { color: THEME_BLUE }
+            }
             onClick={() => setMainTab('supporters')}
           >
             Donors
@@ -1034,7 +1040,12 @@ export default function DonorsPage() {
         <li className="nav-item">
           <button
             type="button"
-            className={`nav-link ${mainTab === 'history' ? 'active' : ''}`}
+            className="nav-link"
+            style={
+              mainTab === 'history'
+                ? { backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }
+                : { color: THEME_BLUE }
+            }
             onClick={() => setMainTab('history')}
           >
             Donation History

@@ -288,10 +288,11 @@
 
 .footer-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(160px, 220px));
   gap: clamp(1.25rem, 2vw, 2.25rem);
   max-width: 1200px;
   margin: 0 auto;
+  justify-content: center;
 }
 
 @media (max-width: 1024px) {

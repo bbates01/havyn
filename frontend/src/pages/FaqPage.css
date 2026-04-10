@@ -1,0 +1,71 @@
+.faq-page {
+  width: 100%;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.faq-section {
+  padding: clamp(2.5rem, 5vw, 4.5rem) 0;
+}
+
+.faq-container {
+  width: min(var(--container, 1100px), 100% - 3rem);
+  margin: 0 auto;
+}
+
+.faq-label {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.faq-container h1 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  line-height: 1.2;
+}
+
+.faq-intro {
+  margin: 0.9rem 0 1.5rem;
+  color: var(--muted);
+  max-width: 720px;
+  line-height: 1.65;
+}
+
+.faq-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.95rem;
+}
+
+.faq-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 1rem 1.1rem;
+}
+
+.faq-card h2 {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.faq-card p {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .faq-container {
+    width: min(var(--container, 1100px), 100% - 2rem);
+  }
+}

@@ -51,6 +51,11 @@ function PublicNavbar() {
               Privacy Policy
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/faq" onClick={() => setMenuOpen(false)}>
+              FAQ
+            </NavLink>
+          </li>
           {!loading && isAuthenticated && (
             <>
               <li>

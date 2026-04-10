@@ -15,22 +15,12 @@ function PublicFooter() {
         <div className="footer-links">
           <h4>About Us</h4>
           <ul>
-            <li><span>Who We Are</span></li>
-            <li><span>Our History</span></li>
-            <li><span>What We Believe</span></li>
-            <li><span>What We Do</span></li>
-            <li><span>Leadership</span></li>
-          </ul>
-        </div>
-
-        <div className="footer-links">
-          <h4>Programs</h4>
-          <ul>
-            <li><span>Safe Homes</span></li>
-            <li><span>Healing Services</span></li>
-            <li><span>Education Support</span></li>
-            <li><span>Legal Advocacy</span></li>
-            <li><span>Family Reintegration</span></li>
+            <li>
+              <Link to="/about#about-who-title">Who We Are</Link>
+            </li>
+            <li>
+              <Link to="/about#about-do-title">What We Do</Link>
+            </li>
           </ul>
         </div>
 
@@ -40,21 +30,18 @@ function PublicFooter() {
             <li>
               <Link to="/donor">Donor Impact</Link>
             </li>
-            <li><span>Stories of Hope</span></li>
-            <li><span>Annual Results</span></li>
-            <li><span>Global Supporters</span></li>
-            <li><span>Partner Network</span></li>
           </ul>
         </div>
 
         <div className="footer-links">
           <h4>Resources</h4>
           <ul>
-            <li><span>Newsroom</span></li>
-            <li><span>Events</span></li>
-            <li><span>Volunteer Guide</span></li>
-            <li><span>Donor FAQ</span></li>
-            <li><span>Contact Support</span></li>
+            <li>
+              <Link to="/faq">Donor FAQ</Link>
+            </li>
+            <li>
+              <a href="mailto:havyn.support@havyn.org">havyn.support@havyn.org</a>
+            </li>
           </ul>
         </div>
 
@@ -65,13 +52,11 @@ function PublicFooter() {
               <Link to="/">Home</Link>
             </li>
             <li>
-              <Link to="/login?from=donate">Donate</Link>
+              <Link to="/donor">Donate</Link>
             </li>
             <li>
               <Link to="/privacy">Privacy Policy</Link>
             </li>
-            <li><span>Terms of Use</span></li>
-            <li><span>Safeguarding Policy</span></li>
           </ul>
         </div>
       </div>
