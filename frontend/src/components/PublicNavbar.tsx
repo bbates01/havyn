@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 function PublicNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, loading, logoutUser } = useAuth();
+  const { isAuthenticated, loading, logoutUser, user } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -29,7 +29,7 @@ function PublicNavbar() {
         {menuOpen ? '\u2715' : '\u2630'}
       </button>
 
-      <nav className={`navbar-collapse${menuOpen ? ' open' : ''}`}>
+      <nav className={`navbar-collapse${menuOpen ? ' open' : ''}`} style={{ flex: 1 }}>
         <ul className="navbar-links">
           <li>
             <NavLink to="/donor-impact" onClick={() => setMenuOpen(false)}>
@@ -41,7 +41,24 @@ function PublicNavbar() {
               Privacy Policy
             </NavLink>
           </li>
-          {!loading && (
+          {!loading && isAuthenticated && (
+            <li>
+              <NavLink
+                to={
+                  user?.roles.includes('Admin') ? '/admin'
+                    : user?.roles.includes('Manager') ? '/manager'
+                      : user?.roles.includes('SocialWorker') ? '/staff'
+                        : '/dashboard'
+                }
+                onClick={() => setMenuOpen(false)}
+              >
+                Tools
+              </NavLink>
+            </li>
+          )}
+        </ul>
+        {!loading && (
+          <ul className="navbar-links" style={{ marginLeft: 'auto' }}>
             <li>
               {isAuthenticated ? (
                 <button
@@ -57,8 +74,8 @@ function PublicNavbar() {
                 </NavLink>
               )}
             </li>
-          )}
-        </ul>
+          </ul>
+        )}
       </nav>
     </header>
   );
