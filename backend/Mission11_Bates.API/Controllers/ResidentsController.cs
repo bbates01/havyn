@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 
 namespace Mission11_Bates.Controllers
 {
@@ -9,12 +11,17 @@ namespace Mission11_Bates.Controllers
     [Authorize(Policy = "CaseAccess")]
     public class ResidentsController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly IResidentAccessService _residentAccess;
 
-        public ResidentsController(HavynDbContext temp) => _context = temp;
+        public ResidentsController(HavynDbContext context, IResidentAccessService residentAccess)
+        {
+            _context = context;
+            _residentAccess = residentAccess;
+        }
 
         [HttpGet("AllResidents")]
-        public IActionResult GetAllResidents(
+        public async Task<IActionResult> GetAllResidents(
             int pageSize = 25,
             int pageIndex = 1,
             string sortBy = "InternalCode",
@@ -24,27 +31,23 @@ namespace Mission11_Bates.Controllers
             int? safehouseId = null,
             string? assignedSocialWorker = null)
         {
-            var query = _context.Residents.AsQueryable();
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var query = _residentAccess.ApplyToResidents(_context.Residents.AsQueryable(), scope);
 
             if (caseStatuses != null && caseStatuses.Any())
-            {
                 query = query.Where(r => caseStatuses.Contains(r.CaseStatus));
-            }
 
             if (riskLevels != null && riskLevels.Any())
-            {
                 query = query.Where(r => riskLevels.Contains(r.CurrentRiskLevel));
-            }
 
             if (safehouseId.HasValue)
-            {
                 query = query.Where(r => r.SafehouseId == safehouseId.Value);
-            }
 
             if (!string.IsNullOrEmpty(assignedSocialWorker))
-            {
                 query = query.Where(r => r.AssignedSocialWorker == assignedSocialWorker);
-            }
 
             query = sortBy switch
             {
@@ -56,46 +59,63 @@ namespace Mission11_Bates.Controllers
                 _ => sortOrder == "desc" ? query.OrderByDescending(r => r.InternalCode) : query.OrderBy(r => r.InternalCode)
             };
 
-            var totalCount = query.Count();
+            var totalCount = await query.CountAsync();
 
-            var items = query
+            var items = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             return Ok(new { Items = items, TotalCount = totalCount });
         }
 
         [HttpGet("GetResident/{residentId}")]
-        public IActionResult GetResident(int residentId)
+        public async Task<IActionResult> GetResident(int residentId)
         {
-            var resident = _context.Residents.Find(residentId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var resident = await _context.Residents.FindAsync(residentId);
             if (resident == null)
-            {
                 return NotFound(new { message = "Resident not found" });
-            }
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, residentId))
+                return NotFound(new { message = "Resident not found" });
 
             return Ok(resident);
         }
 
         [HttpPost("AddResident")]
-        public IActionResult AddResident([FromBody] Resident newResident)
+        public async Task<IActionResult> AddResident([FromBody] Resident newResident)
         {
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var (ok, err) = _residentAccess.ValidateNewResident(scope, newResident);
+            if (!ok)
+                return StatusCode(403, new { message = err });
+
             _context.Residents.Add(newResident);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(newResident);
         }
 
         [HttpPut("UpdateResident/{residentId}")]
-        public IActionResult UpdateResident(int residentId, [FromBody] Resident updatedResident)
+        public async Task<IActionResult> UpdateResident(int residentId, [FromBody] Resident updatedResident)
         {
-            var existing = _context.Residents.Find(residentId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var existing = await _context.Residents.FindAsync(residentId);
             if (existing == null)
-            {
                 return NotFound(new { message = "Resident not found" });
-            }
+
+            var (valid, verr) = await _residentAccess.ValidateResidentUpdateAsync(_context, scope, existing, updatedResident);
+            if (!valid)
+                return StatusCode(403, new { message = verr });
 
             existing.CaseControlNo = updatedResident.CaseControlNo;
             existing.InternalCode = updatedResident.InternalCode;
@@ -146,9 +166,28 @@ namespace Mission11_Bates.Controllers
             existing.NotesRestricted = updatedResident.NotesRestricted;
 
             _context.Residents.Update(existing);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(existing);
+        }
+
+        [HttpDelete("DeleteResident/{residentId}")]
+        public async Task<IActionResult> DeleteResident(int residentId)
+        {
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var existing = await _context.Residents.FindAsync(residentId);
+            if (existing == null)
+                return NotFound(new { message = "Resident not found" });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, residentId))
+                return StatusCode(403, new { message = "Not authorized to delete this resident." });
+
+            _context.Residents.Remove(existing);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

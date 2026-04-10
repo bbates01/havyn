@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 
 namespace Mission11_Bates.Controllers
 {
@@ -9,12 +11,17 @@ namespace Mission11_Bates.Controllers
     [Authorize(Policy = "CaseAccess")]
     public class HomeVisitationsController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly IResidentAccessService _residentAccess;
 
-        public HomeVisitationsController(HavynDbContext temp) => _context = temp;
+        public HomeVisitationsController(HavynDbContext context, IResidentAccessService residentAccess)
+        {
+            _context = context;
+            _residentAccess = residentAccess;
+        }
 
         [HttpGet("AllVisitations")]
-        public IActionResult GetAllVisitations(
+        public async Task<IActionResult> GetAllVisitations(
             int pageSize = 25,
             int pageIndex = 1,
             string sortBy = "VisitDate",
@@ -22,17 +29,18 @@ namespace Mission11_Bates.Controllers
             int? residentId = null,
             string? socialWorker = null)
         {
-            var query = _context.HomeVisitations.AsQueryable();
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var allowedIds = _residentAccess.ResidentIdsInScope(_context, scope);
+            var query = _context.HomeVisitations.AsQueryable().Where(hv => allowedIds.Contains(hv.ResidentId));
 
             if (residentId.HasValue)
-            {
                 query = query.Where(hv => hv.ResidentId == residentId.Value);
-            }
 
             if (!string.IsNullOrEmpty(socialWorker))
-            {
                 query = query.Where(hv => hv.SocialWorker == socialWorker);
-            }
 
             query = sortBy switch
             {
@@ -41,43 +49,54 @@ namespace Mission11_Bates.Controllers
                 _ => sortOrder == "desc" ? query.OrderByDescending(hv => hv.VisitDate) : query.OrderBy(hv => hv.VisitDate)
             };
 
-            var totalCount = query.Count();
-
-            var items = query
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             return Ok(new { Items = items, TotalCount = totalCount });
         }
 
         [HttpGet("GetVisitation/{visitationId}")]
-        public IActionResult GetVisitation(int visitationId)
+        public async Task<IActionResult> GetVisitation(int visitationId)
         {
-            var visitation = _context.HomeVisitations.Find(visitationId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var visitation = await _context.HomeVisitations.FindAsync(visitationId);
             if (visitation == null)
-            {
                 return NotFound(new { message = "Home visitation not found" });
-            }
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, visitation.ResidentId))
+                return NotFound(new { message = "Home visitation not found" });
 
             return Ok(visitation);
         }
 
         [HttpPost("AddVisitation")]
-        public IActionResult AddVisitation([FromBody] HomeVisitation newVisitation, int? appointmentId = null)
+        public async Task<IActionResult> AddVisitation([FromBody] HomeVisitation newVisitation, int? appointmentId = null)
         {
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, newVisitation.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for this resident." });
+
             _context.HomeVisitations.Add(newVisitation);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             if (appointmentId.HasValue)
             {
-                var appointment = _context.Appointments.Find(appointmentId.Value);
-                if (appointment != null && appointment.Status == "Scheduled")
+                var appointment = await _context.Appointments.FindAsync(appointmentId.Value);
+                if (appointment != null && appointment.Status == "Scheduled" &&
+                    await _residentAccess.CanAccessResidentAsync(_context, scope, appointment.ResidentId))
                 {
                     appointment.Status = "Completed";
                     _context.Appointments.Update(appointment);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
             }
 

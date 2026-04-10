@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import PublicLayout from './layouts/PublicLayout';
@@ -20,6 +20,7 @@ const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
+const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 
 function RouteFallback() {
   return (
@@ -52,11 +53,16 @@ function App() {
                 <Route path="/admin/reports" element={<ReportsPage />} />
                 <Route path="/manager" element={<DashboardPage />} />
                 <Route path="/manager/reports" element={<ReportsPage />} />
-                <Route path="/admin/create-user" element={<StaffCreateUserPage />} />
+                <Route path="/admin/accounts" element={<AccountsPage />} />
+                <Route path="/admin/accounts/create" element={<StaffCreateUserPage />} />
+                <Route path="/admin/create-user" element={<Navigate to="/admin/accounts/create" replace />} />
                 <Route path="/manager/caseload" element={<CaseloadPage />} />
-                <Route path="/manager/create-user" element={<StaffCreateUserPage />} />
+                <Route path="/manager/accounts" element={<AccountsPage />} />
+                <Route path="/manager/accounts/create" element={<StaffCreateUserPage />} />
+                <Route path="/manager/create-user" element={<Navigate to="/manager/accounts/create" replace />} />
                 <Route path="/staff" element={<DashboardPage />} />
                 <Route path="/staff/caseload" element={<CaseloadPage />} />
+                <Route path="/staff/accounts" element={<AccountsPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/dashboard/caseload" element={<CaseloadPage />} />
               </Route>
