@@ -53,13 +53,47 @@ export async function login(
   return data;
 }
 
-export function register(data: {
+export interface RegisterDonorPayload {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
-}) {
-  return apiFetch<void>('/api/auth/register', {
+  phone: string;
+  region: string;
+  country: string;
+  supporterType?: string;
+  organizationName?: string;
+}
+
+export function register(data: RegisterDonorPayload) {
+  return apiFetch<{ message?: string }>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export interface CreateStaffUserPayload {
+  email: string;
+  password: string;
+  role: string;
+  displayName?: string;
+  safehouseId?: number;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  region?: string;
+  country?: string;
+  supporterType?: string;
+  organizationName?: string;
+}
+
+export interface CreateStaffUserResponse {
+  message?: string;
+  socialWorkerCode?: string;
+}
+
+export function createStaffUser(data: CreateStaffUserPayload) {
+  return apiFetch<CreateStaffUserResponse>('/api/auth/create-user', {
     method: 'POST',
     body: JSON.stringify(data),
   });

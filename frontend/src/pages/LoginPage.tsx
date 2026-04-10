@@ -213,7 +213,9 @@ function LoginPage() {
         </form>
 
         <p className="login-footer-note">
-          New to Havyn? Learn more on our <Link to="/">home page</Link>.
+          New donor? <Link to="/signup">Create an account</Link>
+          {' · '}
+          Learn more on our <Link to="/">home page</Link>.
         </p>
       </div>
     </div>

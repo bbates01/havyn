@@ -21,8 +21,11 @@ function DashboardLayout() {
 
   const dashPath = base;
   const caseloadPath = `${base}/caseload`;
+  const createUserPath = `${base}/create-user`;
 
+  const showCreateUser = role === 'admin' || role === 'manager';
   const isCaseload = pathname.endsWith('/caseload');
+  const isCreateUser = pathname.includes('/create-user');
 
   return (
     <>
@@ -31,7 +34,7 @@ function DashboardLayout() {
           <ul className="nav nav-tabs border-0 pt-2">
             <li className="nav-item">
               <Link
-                className={`nav-link ${!isCaseload ? 'active fw-semibold' : 'text-muted'}`}
+                className={`nav-link ${!isCaseload && !isCreateUser ? 'active fw-semibold' : 'text-muted'}`}
                 to={dashPath}
               >
                 Dashboard
@@ -45,6 +48,16 @@ function DashboardLayout() {
                 Caseload
               </Link>
             </li>
+            {showCreateUser && (
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${isCreateUser ? 'active fw-semibold' : 'text-muted'}`}
+                  to={createUserPath}
+                >
+                  Create user
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       </nav>

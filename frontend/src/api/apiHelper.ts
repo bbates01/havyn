@@ -14,7 +14,17 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    throw new Error(`API ${res.status}`);
+    let detail = `API ${res.status}`;
+    try {
+      const ct = res.headers.get('Content-Type');
+      if (ct?.includes('application/json')) {
+        const body = (await res.json()) as { message?: string };
+        if (body?.message) detail = body.message;
+      }
+    } catch {
+      /* keep detail */
+    }
+    throw new Error(detail);
   }
 
   if (res.status === 204) {
