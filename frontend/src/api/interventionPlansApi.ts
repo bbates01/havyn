@@ -9,22 +9,22 @@ export function fetchPlans(params: {
   status?: string;
 }) {
   const query = buildQuery(params as Record<string, string | number | boolean | undefined>);
-  return apiFetch<PaginatedResponse<InterventionPlan>>(`/api/intervention-plans${query}`);
+  return apiFetch<PaginatedResponse<InterventionPlan>>(`/api/InterventionPlans/AllPlans${query}`);
 }
 
 export function getPlan(id: number) {
-  return apiFetch<InterventionPlan>(`/api/intervention-plans/${id}`);
+  return apiFetch<InterventionPlan>(`/api/InterventionPlans/GetPlan/${id}`);
 }
 
 export function addPlan(data: Partial<InterventionPlan>) {
-  return apiFetch<InterventionPlan>('/api/intervention-plans', {
+  return apiFetch<InterventionPlan>('/api/InterventionPlans/AddPlan', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
 export function updatePlan(id: number, data: Partial<InterventionPlan>) {
-  return apiFetch<InterventionPlan>(`/api/intervention-plans/${id}`, {
+  return apiFetch<InterventionPlan>(`/api/InterventionPlans/UpdatePlan/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });

@@ -9,7 +9,7 @@ function PublicFooter() {
   }
 
   return (
-    <footer className="public-footer">
+    <footer className="public-footer no-print">
       <h2 className="footer-title">Learn More About Us</h2>
       <div className="footer-grid">
         <div className="footer-links">

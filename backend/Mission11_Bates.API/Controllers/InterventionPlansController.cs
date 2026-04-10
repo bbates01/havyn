@@ -82,6 +82,10 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddPlan")]
         public IActionResult AddPlan([FromBody] InterventionPlan newPlan)
         {
+            newPlan.PlanId = _context.InterventionPlans.Any()
+                ? _context.InterventionPlans.Max(p => p.PlanId) + 1
+                : 1;
+
             _context.InterventionPlans.Add(newPlan);
             _context.SaveChanges();
             return Ok(newPlan);

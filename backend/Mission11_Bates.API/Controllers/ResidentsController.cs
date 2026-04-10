@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
 
 namespace Mission11_Bates.Controllers
@@ -9,9 +11,14 @@ namespace Mission11_Bates.Controllers
     [Authorize(Policy = "CaseAccess")]
     public class ResidentsController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ResidentsController(HavynDbContext temp) => _context = temp;
+        public ResidentsController(HavynDbContext context, UserManager<ApplicationUser> userManager)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
 
         [HttpGet("AllResidents")]
         public IActionResult GetAllResidents(
@@ -66,6 +73,19 @@ namespace Mission11_Bates.Controllers
             return Ok(new { Items = items, TotalCount = totalCount });
         }
 
+        [HttpGet("SocialWorkers")]
+        [Authorize(Policy = "StaffManagement")]
+        public async Task<IActionResult> GetSocialWorkers()
+        {
+            var workers = await _userManager.Users
+                .Where(u => u.SocialWorkerCode != null)
+                .Select(u => new { workerCode = u.SocialWorkerCode, displayName = u.DisplayName })
+                .OrderBy(w => w.workerCode)
+                .ToListAsync();
+
+            return Ok(workers);
+        }
+
         [HttpGet("GetResident/{residentId}")]
         public IActionResult GetResident(int residentId)
         {
@@ -80,21 +100,50 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPost("AddResident")]
-        public IActionResult AddResident([FromBody] Resident newResident)
+        [Authorize(Policy = "StaffManagement")]
+        public async Task<IActionResult> AddResident([FromBody] Resident newResident)
         {
+            var caller = await _userManager.GetUserAsync(User);
+            if (caller == null) return Unauthorized();
+
+            var roles = await _userManager.GetRolesAsync(caller);
+            if (roles.Contains("Manager"))
+            {
+                if (caller.SafehouseId == null)
+                    return StatusCode(403, new { message = "Your account is not assigned to a safehouse." });
+                newResident.SafehouseId = caller.SafehouseId.Value;
+            }
+
+            // DB may not use IDENTITY on ResidentId (pre-provisioned schema). EF would omit PK=0 and Postgres inserts NULL.
+            newResident.ResidentId = await _context.Residents.AnyAsync()
+                ? await _context.Residents.MaxAsync(r => r.ResidentId) + 1
+                : 1;
+
+            newResident.CreatedAt = DateTime.UtcNow;
             _context.Residents.Add(newResident);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(newResident);
         }
 
         [HttpPut("UpdateResident/{residentId}")]
-        public IActionResult UpdateResident(int residentId, [FromBody] Resident updatedResident)
+        [Authorize(Policy = "StaffManagement")]
+        public async Task<IActionResult> UpdateResident(int residentId, [FromBody] Resident updatedResident)
         {
-            var existing = _context.Residents.Find(residentId);
+            var caller = await _userManager.GetUserAsync(User);
+            if (caller == null) return Unauthorized();
 
+            var existing = await _context.Residents.FindAsync(residentId);
             if (existing == null)
-            {
                 return NotFound(new { message = "Resident not found" });
+
+            var roles = await _userManager.GetRolesAsync(caller);
+            if (roles.Contains("Manager"))
+            {
+                if (caller.SafehouseId == null)
+                    return StatusCode(403, new { message = "Your account is not assigned to a safehouse." });
+                if (existing.SafehouseId != caller.SafehouseId)
+                    return StatusCode(403, new { message = "You can only edit residents in your own safehouse." });
+                updatedResident.SafehouseId = caller.SafehouseId.Value;
             }
 
             existing.CaseControlNo = updatedResident.CaseControlNo;
@@ -146,7 +195,7 @@ namespace Mission11_Bates.Controllers
             existing.NotesRestricted = updatedResident.NotesRestricted;
 
             _context.Residents.Update(existing);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(existing);
         }

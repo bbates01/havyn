@@ -10,23 +10,23 @@ export function fetchIncidents(params: {
   severity?: string;
 }) {
   const query = buildQuery(params as Record<string, string | number | boolean | undefined>);
-  return apiFetch<PaginatedResponse<IncidentReport>>(`/api/incident-reports${query}`);
+  return apiFetch<PaginatedResponse<IncidentReport>>(`/api/IncidentReports/AllIncidents${query}`);
 }
 
 export function getIncident(id: number) {
-  return apiFetch<IncidentReport>(`/api/incident-reports/${id}`);
+  return apiFetch<IncidentReport>(`/api/IncidentReports/GetIncident/${id}`);
 }
 
 export function addIncident(data: Partial<IncidentReport>) {
-  return apiFetch<IncidentReport>('/api/incident-reports', {
+  return apiFetch<IncidentReport>('/api/IncidentReports/AddIncident', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export function resolveIncident(id: number, resolutionDate: string) {
-  return apiFetch<void>(`/api/incident-reports/${id}/resolve`, {
+export function updateIncident(id: number, data: Partial<IncidentReport>) {
+  return apiFetch<IncidentReport>(`/api/IncidentReports/UpdateIncident/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ resolutionDate }),
+    body: JSON.stringify(data),
   });
 }

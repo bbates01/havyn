@@ -1,9 +1,9 @@
-import { Outlet, NavLink} from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { useAuth } from '../context/AuthContext';
 
 function DashboardLayout() {
   const { user } = useAuth();
-  // const { pathname } = useLocation();
 
   const role: 'admin' | 'manager' | 'staff' | null = user?.roles.includes('Admin')
     ? 'admin'
@@ -19,13 +19,15 @@ function DashboardLayout() {
         : role === 'staff' ? '/staff'
           : '/dashboard';
 
-  const dashPath      = base;
-  const caseloadPath  = `${base}/caseload`;
-  const reportsPath   = `${base}/reports`;
+  const dashPath = base;
+  const caseloadPath = `${base}/caseload`;
+  const reportsPath = `${base}/reports`;
   const createUserPath = `${base}/create-user`;
+  const formsPath = `${base}/forms`;
 
-  const showReportsTab  = role === 'admin' || role === 'manager';
-  const showCreateUser  = role === 'admin' || role === 'manager';
+  const showReportsTab = role === 'admin' || role === 'manager';
+  const showCreateUser = role === 'admin' || role === 'manager';
+  const showFormsNav = role === 'admin' || role === 'manager' || role === 'staff';
 
   return (
     <>
@@ -74,6 +76,18 @@ function DashboardLayout() {
                   to={createUserPath}
                 >
                   Create User
+                </NavLink>
+              </li>
+            )}
+            {showFormsNav && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={formsPath}
+                >
+                  Forms
                 </NavLink>
               </li>
             )}

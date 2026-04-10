@@ -62,9 +62,38 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddRecord")]
         public IActionResult AddRecord([FromBody] EducationRecord newRecord)
         {
+            newRecord.EducationRecordId = _context.EducationRecords.Any()
+                ? _context.EducationRecords.Max(r => r.EducationRecordId) + 1
+                : 1;
+
             _context.EducationRecords.Add(newRecord);
             _context.SaveChanges();
             return Ok(newRecord);
+        }
+
+        [HttpPut("UpdateRecord/{educationRecordId}")]
+        public IActionResult UpdateRecord(int educationRecordId, [FromBody] EducationRecord updatedRecord)
+        {
+            var existing = _context.EducationRecords.Find(educationRecordId);
+
+            if (existing == null)
+            {
+                return NotFound(new { message = "Education record not found" });
+            }
+
+            existing.ResidentId = updatedRecord.ResidentId;
+            existing.RecordDate = updatedRecord.RecordDate;
+            existing.EducationLevel = updatedRecord.EducationLevel;
+            existing.SchoolName = updatedRecord.SchoolName;
+            existing.EnrollmentStatus = updatedRecord.EnrollmentStatus;
+            existing.AttendanceRate = updatedRecord.AttendanceRate;
+            existing.ProgressPercent = updatedRecord.ProgressPercent;
+            existing.CompletionStatus = updatedRecord.CompletionStatus;
+            existing.Notes = updatedRecord.Notes;
+
+            _context.EducationRecords.Update(existing);
+            _context.SaveChanges();
+            return Ok(existing);
         }
     }
 }

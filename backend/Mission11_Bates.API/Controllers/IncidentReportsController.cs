@@ -80,6 +80,10 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddIncident")]
         public IActionResult AddIncident([FromBody] IncidentReport newIncident)
         {
+            newIncident.IncidentId = _context.IncidentReports.Any()
+                ? _context.IncidentReports.Max(i => i.IncidentId) + 1
+                : 1;
+
             _context.IncidentReports.Add(newIncident);
             _context.SaveChanges();
             return Ok(newIncident);
@@ -95,6 +99,14 @@ namespace Mission11_Bates.Controllers
                 return NotFound(new { message = "Incident report not found" });
             }
 
+            existing.ResidentId = updatedIncident.ResidentId;
+            existing.SafehouseId = updatedIncident.SafehouseId;
+            existing.IncidentDate = updatedIncident.IncidentDate;
+            existing.ReportedBy = updatedIncident.ReportedBy;
+            existing.IncidentType = updatedIncident.IncidentType;
+            existing.Severity = updatedIncident.Severity;
+            existing.Description = updatedIncident.Description;
+            existing.ResponseTaken = updatedIncident.ResponseTaken;
             existing.Resolved = updatedIncident.Resolved;
             existing.ResolutionDate = updatedIncident.ResolutionDate;
             existing.FollowUpRequired = updatedIncident.FollowUpRequired;
