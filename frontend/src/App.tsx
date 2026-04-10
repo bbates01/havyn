@@ -15,6 +15,7 @@ const MlTestPage = lazy(() => import('./pages/MlTestPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
+const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
 
 function RouteFallback() {
   return (
@@ -42,8 +43,10 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route path="/admin" element={<DashboardPage />} />
                 <Route path="/admin/caseload" element={<CaseloadPage />} />
+                <Route path="/admin/create-user" element={<StaffCreateUserPage />} />
                 <Route path="/manager" element={<DashboardPage />} />
                 <Route path="/manager/caseload" element={<CaseloadPage />} />
+                <Route path="/manager/create-user" element={<StaffCreateUserPage />} />
                 <Route path="/staff" element={<DashboardPage />} />
                 <Route path="/staff/caseload" element={<CaseloadPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
