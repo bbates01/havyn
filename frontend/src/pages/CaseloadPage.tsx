@@ -72,6 +72,8 @@ interface Safehouse {
   status: string;
 }
 
+const THEME_BLUE = '#4A6FA5';
+
 function safehouseCityLabel(
   safehouses: Safehouse[],
   safehouseId: number
@@ -1097,7 +1099,8 @@ export default function CaseloadPage() {
             </p>
           </div>
           <button
-            className="btn btn-theme-primary btn-sm"
+            className="btn btn-sm"
+            style={{ backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }}
             onClick={() => navigate(`${basePath}/residents/new`)}
           >
             + New Resident
@@ -1118,7 +1121,8 @@ export default function CaseloadPage() {
             </p>
           </div>
           <button
-            className="btn btn-theme-primary btn-sm"
+            className="btn btn-sm"
+            style={{ backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }}
             onClick={() => navigate(`${basePath}/residents/new`)}
           >
             + New Resident

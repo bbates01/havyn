@@ -2,11 +2,40 @@ import { Link } from 'react-router-dom';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 
 const STATS = [
-  { icon: '🏠', number: '6', desc: 'Safe houses across the Philippines' },
-  { icon: '👧', number: '150+', desc: 'Girls currently in our care' },
-  { icon: '📈', number: '78%', desc: 'Successful reintegration rate' },
-  { icon: '🌍', number: '500+', desc: 'Donors worldwide' },
-];
+  {
+    key: 'houses',
+    number: '9',
+    desc: 'Safe houses across the Philippines',
+    icon: (
+      <svg viewBox="0 0 24 24" className="stat-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 11.5L12 5l8 6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7 10.5V19h10v-8.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    key: 'girls',
+    number: '77',
+    desc: 'Girls currently in our care',
+    icon: (
+      <svg viewBox="0 0 24 24" className="stat-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
+        <path d="M6.5 20c.4-3.5 2.8-5.5 5.5-5.5S17.1 16.5 17.5 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    key: 'donors',
+    number: '61',
+    desc: 'Donors worldwide',
+    icon: (
+      <svg viewBox="0 0 24 24" className="stat-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+        <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+] as const;
 
 function StatsSection() {
   const ref = useScrollReveal<HTMLElement>();
@@ -37,7 +66,7 @@ function StatsSection() {
 
           <div className="stats-list">
             {STATS.map((s) => (
-              <div className="stat-item stagger-item" key={s.number}>
+              <div className="stat-item stagger-item" key={s.key}>
                 <div className="stat-icon" aria-hidden="true">
                   {s.icon}
                 </div>

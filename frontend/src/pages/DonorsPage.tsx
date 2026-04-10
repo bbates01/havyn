@@ -1426,7 +1426,12 @@ export default function DonorsPage() {
                     >
                       <td>{supporterNameMap.get(d.supporterId) ?? `#${d.supporterId}`}</td>
                       <td>
-                        <span className="badge bg-info text-dark">{d.donationType}</span>
+                        <span
+                          className="badge"
+                          style={{ backgroundColor: THEME_BLUE, color: '#fff' }}
+                        >
+                          {d.donationType}
+                        </span>
                       </td>
                       <td>{String(d.donationDate)}</td>
                       <td>
@@ -1438,7 +1443,12 @@ export default function DonorsPage() {
                       <td>{d.channelSource}</td>
                       <td>
                         {d.isRecurring ? (
-                          <span className="badge bg-primary">Recurring</span>
+                          <span
+                            className="badge"
+                            style={{ backgroundColor: THEME_BLUE, color: '#fff' }}
+                          >
+                            Recurring
+                          </span>
                         ) : (
                           '—'
                         )}

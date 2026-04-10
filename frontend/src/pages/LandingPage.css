@@ -440,6 +440,11 @@
   transition: background 0.2s ease;
 }
 
+.stat-icon-svg {
+  width: 24px;
+  height: 24px;
+}
+
 .stat-item:hover .stat-icon {
   background: rgba(26, 139, 165, 0.2);
 }
