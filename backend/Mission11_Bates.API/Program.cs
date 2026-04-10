@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
@@ -21,50 +20,18 @@ builder.Services.AddControllers().AddJsonOptions(options =>
         JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });
 
-// #region agent log
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
     {
-        try
-        {
-            var errors = context.ModelState
-                .Where(kvp => kvp.Value?.Errors?.Count > 0)
-                .ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
-
-            var payload = new
-            {
-                sessionId = "128924",
-                runId = "pre-fix",
-                hypothesisId = "H6",
-                location = "Program.cs:InvalidModelStateResponseFactory",
-                message = "Automatic 400 due to invalid model state",
-                data = new
-                {
-                    path = context.HttpContext.Request.Path.Value,
-                    method = context.HttpContext.Request.Method,
-                    contentType = context.HttpContext.Request.ContentType,
-                    errors,
-                },
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            };
-
-            System.IO.File.AppendAllText(
-                "/Users/joshuasolano/Desktop/BYU/IS_JC_Core/INTEX II/webApp/.cursor/debug-128924.log",
-                JsonSerializer.Serialize(payload) + "\n");
-
-            // Return a JSON body so the frontend can surface real errors.
-            return new BadRequestObjectResult(new { message = "Validation failed", errors });
-        }
-        catch
-        {
-            return new BadRequestObjectResult(new { message = "Validation failed" });
-        }
+        var errors = context.ModelState
+            .Where(kvp => kvp.Value?.Errors?.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+        return new BadRequestObjectResult(new { message = "Validation failed", errors });
     };
 });
-// #endregion agent log
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

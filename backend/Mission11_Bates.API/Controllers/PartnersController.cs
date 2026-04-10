@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mission11_Bates.Contracts;
@@ -79,63 +78,8 @@ namespace Mission11_Bates.Controllers
         [Authorize(Policy = "AdminOnly")]
         public IActionResult AddPartner([FromBody] PartnerUpsertRequest body)
         {
-            // #region agent log
-            try
-            {
-                var payload = new
-                {
-                    sessionId = "128924",
-                    runId = "pre-fix",
-                    hypothesisId = "H5",
-                    location = "PartnersController.cs:AddPartner",
-                    message = "AddPartner received",
-                    data = new
-                    {
-                        hasBody = body != null,
-                        partnerNameLen = body?.PartnerName?.Length ?? -1,
-                        partnerTypeLen = body?.PartnerType?.Length ?? -1,
-                        roleTypeLen = body?.RoleType?.Length ?? -1,
-                        contactNameLen = body?.ContactName?.Length ?? -1,
-                        emailLen = body?.Email?.Length ?? -1,
-                        phoneLen = body?.Phone?.Length ?? -1,
-                        regionLen = body?.Region?.Length ?? -1,
-                        status = body?.Status,
-                        startDate = body?.StartDate,
-                        endDate = body?.EndDate,
-                        notesLen = body?.Notes?.Length ?? -1,
-                        modelStateIsValid = ModelState.IsValid,
-                        modelStateKeys = ModelState.Keys.ToArray(),
-                        modelStateErrCount = ModelState.Values.Sum(v => v.Errors.Count),
-                    },
-                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                };
-                System.IO.File.AppendAllText(
-                    "/Users/joshuasolano/Desktop/BYU/IS_JC_Core/INTEX II/webApp/.cursor/debug-128924.log",
-                    JsonSerializer.Serialize(payload) + "\n");
-            }
-            catch { }
-            // #endregion agent log
             if (!TryMapPartner(body, out var entity, out var error))
             {
-                // #region agent log
-                try
-                {
-                    var payload = new
-                    {
-                        sessionId = "128924",
-                        runId = "pre-fix",
-                        hypothesisId = "H5",
-                        location = "PartnersController.cs:AddPartner",
-                        message = "AddPartner rejected by TryMapPartner",
-                        data = new { error },
-                        timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                    };
-                    System.IO.File.AppendAllText(
-                        "/Users/joshuasolano/Desktop/BYU/IS_JC_Core/INTEX II/webApp/.cursor/debug-128924.log",
-                        JsonSerializer.Serialize(payload) + "\n");
-                }
-                catch { }
-                // #endregion agent log
                 return BadRequest(new { message = error });
             }
 
