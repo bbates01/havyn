@@ -30,3 +30,9 @@ export function updateIncident(id: number, data: Partial<IncidentReport>) {
     body: JSON.stringify(data),
   });
 }
+
+export function deleteIncident(id: number) {
+  return apiFetch<void>(`/api/IncidentReports/DeleteIncident/${id}`, {
+    method: 'DELETE',
+  });
+}

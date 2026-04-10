@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { apiFetch } from '../api/apiHelper';
 import { useAuth } from '../context/AuthContext';
+import FormHistoryList from '../components/FormHistoryList';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -1239,6 +1240,12 @@ export default function CaseloadPage() {
               : undefined
           }
         />
+      )}
+
+      {role === 'manager' && (
+        <div className="mt-4">
+          <FormHistoryList basePath="/manager" canManage={false} />
+        </div>
       )}
     </div>
   );

@@ -28,3 +28,9 @@ export function updateEducationRecord(id: number, data: Partial<EducationRecord>
     body: JSON.stringify(data),
   });
 }
+
+export function deleteEducationRecord(id: number) {
+  return apiFetch<void>(`/api/EducationRecords/DeleteRecord/${id}`, {
+    method: 'DELETE',
+  });
+}

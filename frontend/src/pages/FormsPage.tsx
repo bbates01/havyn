@@ -8,6 +8,7 @@ import InterventionPlanFormPanel from '../components/InterventionPlanFormPanel';
 import IncidentReportFormPanel from '../components/IncidentReportFormPanel';
 import HealthWellbeingFormPanel from '../components/HealthWellbeingFormPanel';
 import EducationRecordFormPanel from '../components/EducationRecordFormPanel';
+import FormHistoryList from '../components/FormHistoryList';
 
 type FormTypeId = 'process-recording' | 'home-visitation' | 'intervention-plan' | 'incident-report' | 'health-wellbeing' | 'education-record' | 'more-coming';
 
@@ -267,6 +268,10 @@ export default function FormsPage() {
           Additional forms will appear here as they are added.
         </div>
       )}
+
+      <div className="mt-4">
+        <FormHistoryList basePath={basePath} canManage={role === 'admin'} />
+      </div>
     </div>
   );
 }

@@ -187,6 +187,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdateRecording/{recordingId}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UpdateRecording(int recordingId, [FromBody] ProcessRecording body)
         {
             var caller = await GetCallerAsync();
@@ -258,6 +259,19 @@ namespace Mission11_Bates.Controllers
                 : existing;
 
             return Ok(response);
+        }
+
+        [HttpDelete("DeleteRecording/{recordingId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> DeleteRecording(int recordingId)
+        {
+            var existing = await _context.ProcessRecordings.FindAsync(recordingId);
+            if (existing == null)
+                return NotFound(new { message = "Process recording not found" });
+
+            _context.ProcessRecordings.Remove(existing);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

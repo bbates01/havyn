@@ -40,3 +40,9 @@ export function updateVisitation(id: number, data: Partial<HomeVisitation>) {
     body: JSON.stringify(data),
   });
 }
+
+export function deleteVisitation(id: number) {
+  return apiFetch<void>(`/api/HomeVisitations/DeleteVisitation/${id}`, {
+    method: 'DELETE',
+  });
+}

@@ -29,3 +29,9 @@ export function updatePlan(id: number, data: Partial<InterventionPlan>) {
     body: JSON.stringify(data),
   });
 }
+
+export function deletePlan(id: number) {
+  return apiFetch<void>(`/api/InterventionPlans/DeletePlan/${id}`, {
+    method: 'DELETE',
+  });
+}

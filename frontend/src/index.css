@@ -87,6 +87,46 @@ select:focus-visible {
   opacity: 0.65;
 }
 
+/* Secondary themed actions for admin row controls */
+.btn.btn-theme-outline-edit {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #fff;
+  font-weight: 600;
+}
+
+.btn.btn-theme-outline-edit:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.btn.btn-theme-outline-delete {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #fff;
+  font-weight: 600;
+}
+
+.btn.btn-theme-outline-delete:hover:not(:disabled) {
+  border-color: var(--primary-dark);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.btn.btn-theme-delete {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn.btn-theme-delete:hover:not(:disabled) {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: #fff;
+}
+
 /* ── Print / PDF ─────────────────────────────────────────── */
 @media print {
   /* Hide navigation chrome and interactive controls */

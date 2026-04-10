@@ -221,6 +221,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdateVisitation/{visitationId}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UpdateVisitation(int visitationId, [FromBody] HomeVisitation body)
         {
             var caller = await GetCallerAsync();
@@ -257,6 +258,19 @@ namespace Mission11_Bates.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(existing);
+        }
+
+        [HttpDelete("DeleteVisitation/{visitationId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> DeleteVisitation(int visitationId)
+        {
+            var existing = await _context.HomeVisitations.FindAsync(visitationId);
+            if (existing == null)
+                return NotFound(new { message = "Home visitation not found" });
+
+            _context.HomeVisitations.Remove(existing);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

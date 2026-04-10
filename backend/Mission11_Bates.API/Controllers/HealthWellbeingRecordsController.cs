@@ -90,6 +90,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdateRecord/{healthRecordId}")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult UpdateRecord(int healthRecordId, [FromBody] HealthWellbeingRecord updatedRecord)
         {
             var existing = _context.HealthWellbeingRecords.Find(healthRecordId);
@@ -116,6 +117,19 @@ namespace Mission11_Bates.Controllers
             _context.HealthWellbeingRecords.Update(existing);
             _context.SaveChanges();
             return Ok(existing);
+        }
+
+        [HttpDelete("DeleteRecord/{healthRecordId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult DeleteRecord(int healthRecordId)
+        {
+            var existing = _context.HealthWellbeingRecords.Find(healthRecordId);
+            if (existing == null)
+                return NotFound(new { message = "Record not found" });
+
+            _context.HealthWellbeingRecords.Remove(existing);
+            _context.SaveChanges();
+            return NoContent();
         }
     }
 }

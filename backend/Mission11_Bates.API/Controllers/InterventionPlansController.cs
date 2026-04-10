@@ -106,6 +106,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdatePlan/{planId}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UpdatePlan(int planId, [FromBody] InterventionPlan updatedPlan)
         {
             var scope = await _residentAccess.GetScopeAsync(User);
@@ -139,6 +140,19 @@ namespace Mission11_Bates.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(existing);
+        }
+
+        [HttpDelete("DeletePlan/{planId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> DeletePlan(int planId)
+        {
+            var existing = await _context.InterventionPlans.FindAsync(planId);
+            if (existing == null)
+                return NotFound(new { message = "Intervention plan not found" });
+
+            _context.InterventionPlans.Remove(existing);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

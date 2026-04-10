@@ -91,6 +91,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdateRecord/{educationRecordId}")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult UpdateRecord(int educationRecordId, [FromBody] EducationRecord updatedRecord)
         {
             var existing = _context.EducationRecords.Find(educationRecordId);
@@ -113,6 +114,19 @@ namespace Mission11_Bates.Controllers
             _context.EducationRecords.Update(existing);
             _context.SaveChanges();
             return Ok(existing);
+        }
+
+        [HttpDelete("DeleteRecord/{educationRecordId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult DeleteRecord(int educationRecordId)
+        {
+            var existing = _context.EducationRecords.Find(educationRecordId);
+            if (existing == null)
+                return NotFound(new { message = "Education record not found" });
+
+            _context.EducationRecords.Remove(existing);
+            _context.SaveChanges();
+            return NoContent();
         }
     }
 }

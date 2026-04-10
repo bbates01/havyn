@@ -40,3 +40,9 @@ export function updateRecording(id: number, data: Partial<ProcessRecording>) {
     body: JSON.stringify(data),
   });
 }
+
+export function deleteRecording(id: number) {
+  return apiFetch<void>(`/api/ProcessRecordings/DeleteRecording/${id}`, {
+    method: 'DELETE',
+  });
+}
