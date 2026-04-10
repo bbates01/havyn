@@ -91,7 +91,7 @@ function DonorImpactPage() {
         </div>
 
         <div className="donor-cta">
-          <Link to="/login" className="donor-cta-primary">
+          <Link to="/donor" className="donor-cta-primary">
             Donate through Havyn
           </Link>
           <Link to="/" className="donor-cta-secondary">

@@ -7,6 +7,8 @@ import PublicLayout from './layouts/PublicLayout';
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignUpPage = lazy(() => import('./pages/SignUpPage'));
+const DonorHomePage = lazy(() => import('./pages/DonorHomePage'));
 const DonorImpactPage = lazy(() => import('./pages/DonorImpactPage'));
 const ApiTestPage = lazy(() => import('./pages/ApiTestPage'));
 const MlTestPage = lazy(() => import('./pages/MlTestPage'));
@@ -32,6 +34,8 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/donor" element={<DonorHomePage />} />
               <Route path="/donor-impact" element={<DonorImpactPage />} />
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
