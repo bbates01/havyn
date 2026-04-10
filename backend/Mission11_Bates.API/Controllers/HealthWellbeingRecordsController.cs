@@ -74,6 +74,9 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddRecord")]
         public async Task<IActionResult> AddRecord([FromBody] HealthWellbeingRecord newRecord)
         {
+            newRecord.HealthRecordId = _context.HealthWellbeingRecords.Any()
+                ? _context.HealthWellbeingRecords.Max(r => r.HealthRecordId) + 1
+                : 1;
             var scope = await _residentAccess.GetScopeAsync(User);
             if (!_residentAccess.ScopeAllowsCaseAccess(scope))
                 return StatusCode(403, new { message = "Account is not configured for case access." });
@@ -84,6 +87,35 @@ namespace Mission11_Bates.Controllers
             _context.HealthWellbeingRecords.Add(newRecord);
             await _context.SaveChangesAsync();
             return Ok(newRecord);
+        }
+
+        [HttpPut("UpdateRecord/{healthRecordId}")]
+        public IActionResult UpdateRecord(int healthRecordId, [FromBody] HealthWellbeingRecord updatedRecord)
+        {
+            var existing = _context.HealthWellbeingRecords.Find(healthRecordId);
+
+            if (existing == null)
+            {
+                return NotFound(new { message = "Record not found" });
+            }
+
+            existing.ResidentId = updatedRecord.ResidentId;
+            existing.RecordDate = updatedRecord.RecordDate;
+            existing.GeneralHealthScore = updatedRecord.GeneralHealthScore;
+            existing.NutritionScore = updatedRecord.NutritionScore;
+            existing.SleepQualityScore = updatedRecord.SleepQualityScore;
+            existing.EnergyLevelScore = updatedRecord.EnergyLevelScore;
+            existing.HeightCm = updatedRecord.HeightCm;
+            existing.WeightKg = updatedRecord.WeightKg;
+            existing.Bmi = updatedRecord.Bmi;
+            existing.MedicalCheckupDone = updatedRecord.MedicalCheckupDone;
+            existing.DentalCheckupDone = updatedRecord.DentalCheckupDone;
+            existing.PsychologicalCheckupDone = updatedRecord.PsychologicalCheckupDone;
+            existing.Notes = updatedRecord.Notes;
+
+            _context.HealthWellbeingRecords.Update(existing);
+            _context.SaveChanges();
+            return Ok(existing);
         }
     }
 }

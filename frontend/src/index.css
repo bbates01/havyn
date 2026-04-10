@@ -64,3 +64,80 @@ select:focus-visible {
   outline: 2px solid var(--focus, var(--primary));
   outline-offset: 3px;
 }
+
+/* Primary actions — matches site brown (not Bootstrap blue) */
+.btn.btn-theme-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn.btn-theme-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: #fff;
+}
+
+.btn.btn-theme-primary:focus-visible {
+  box-shadow: 0 0 0 0.25rem var(--focus);
+}
+
+.btn.btn-theme-primary:disabled {
+  opacity: 0.65;
+}
+
+/* ── Print / PDF ─────────────────────────────────────────── */
+@media print {
+  /* Hide navigation chrome and interactive controls */
+  .dashboard-subnav,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Card becomes frameless on paper */
+  .card,
+  .card-body {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* Text / number / date inputs and selects → bottom-border underline */
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    border: none !important;
+    border-bottom: 1.5px solid #333 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding-left: 0 !important;
+  }
+
+  /* Readonly fields (e.g. auto-computed BMI) need no underline */
+  input[readonly] {
+    border-bottom: none !important;
+  }
+
+  /* Checkboxes stay visible as printable boxes */
+  .form-check-input {
+    border: 1.5px solid #333 !important;
+  }
+
+  /* Labels and section headings in solid black */
+  .form-label,
+  .h6 {
+    color: #000 !important;
+  }
+
+  /* Keep hint text small but legible */
+  .form-text {
+    font-size: 0.7rem;
+    color: #555 !important;
+  }
+
+  @page {
+    margin: 1.5cm;
+  }
+}

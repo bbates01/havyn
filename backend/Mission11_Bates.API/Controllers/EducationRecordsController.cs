@@ -75,6 +75,9 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddRecord")]
         public async Task<IActionResult> AddRecord([FromBody] EducationRecord newRecord)
         {
+            newRecord.EducationRecordId = _context.EducationRecords.Any()
+                ? _context.EducationRecords.Max(r => r.EducationRecordId) + 1
+                : 1;
             var scope = await _residentAccess.GetScopeAsync(User);
             if (!_residentAccess.ScopeAllowsCaseAccess(scope))
                 return StatusCode(403, new { message = "Account is not configured for case access." });
@@ -85,6 +88,31 @@ namespace Mission11_Bates.Controllers
             _context.EducationRecords.Add(newRecord);
             await _context.SaveChangesAsync();
             return Ok(newRecord);
+        }
+
+        [HttpPut("UpdateRecord/{educationRecordId}")]
+        public IActionResult UpdateRecord(int educationRecordId, [FromBody] EducationRecord updatedRecord)
+        {
+            var existing = _context.EducationRecords.Find(educationRecordId);
+
+            if (existing == null)
+            {
+                return NotFound(new { message = "Education record not found" });
+            }
+
+            existing.ResidentId = updatedRecord.ResidentId;
+            existing.RecordDate = updatedRecord.RecordDate;
+            existing.EducationLevel = updatedRecord.EducationLevel;
+            existing.SchoolName = updatedRecord.SchoolName;
+            existing.EnrollmentStatus = updatedRecord.EnrollmentStatus;
+            existing.AttendanceRate = updatedRecord.AttendanceRate;
+            existing.ProgressPercent = updatedRecord.ProgressPercent;
+            existing.CompletionStatus = updatedRecord.CompletionStatus;
+            existing.Notes = updatedRecord.Notes;
+
+            _context.EducationRecords.Update(existing);
+            _context.SaveChanges();
+            return Ok(existing);
         }
     }
 }

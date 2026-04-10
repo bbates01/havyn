@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Mission11_Bates.Data
 {
     public class Resident
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int ResidentId { get; set; }
         [Required]
         public string CaseControlNo { get; set; }

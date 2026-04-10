@@ -1,31 +1,48 @@
 import type { Resident } from '../types/Resident';
-import type { PaginatedResponse } from '../types/PaginatedResponse';
 import { apiFetch, buildQuery } from './apiHelper';
+
+export interface SocialWorkerOption {
+  workerCode: string;
+  displayName: string;
+}
+
+interface PaginatedResponse<T> {
+  items?: T[];
+  Items?: T[];
+  totalCount?: number;
+  TotalCount?: number;
+}
 
 /** Maps API JSON (camelCase or PascalCase) to the frontend Resident shape. */
 export function normalizeResidentFromApi(raw: unknown): Resident {
   const r = raw as Record<string, unknown>;
+
   const s = (camel: string, pascal: string, fallback = ''): string =>
     String(r[camel] ?? r[pascal] ?? fallback);
+
   const n = (camel: string, pascal: string, fallback = 0): number =>
     Number(r[camel] ?? r[pascal] ?? fallback);
+
   const b = (camel: string, pascal: string, fallback = false): boolean => {
     const v = r[camel] ?? r[pascal];
     if (typeof v === 'boolean') return v;
     return fallback;
   };
+
   const optStr = (camel: string, pascal: string): string | null | undefined => {
     const v = r[camel] ?? r[pascal];
     if (v === undefined) return undefined;
     if (v === null) return null;
     return String(v);
   };
+
   const dateStr = (camel: string, pascal: string, fallback = ''): string => {
     const v = r[camel] ?? r[pascal];
     if (v == null || v === '') return fallback;
     const str = String(v);
     return str.length >= 10 ? str.slice(0, 10) : str;
   };
+
   const optDate = (camel: string, pascal: string): string | null | undefined => {
     const v = r[camel] ?? r[pascal];
     if (v === undefined) return undefined;
@@ -104,7 +121,7 @@ export function deleteResidentCaseRecord(id: number) {
   });
 }
 
-export function fetchResidents(params: {
+export async function fetchResidents(params: {
   pageSize: number;
   pageIndex: number;
   status?: string;
@@ -114,7 +131,12 @@ export function fetchResidents(params: {
   assignedWorker?: string;
 }) {
   const query = buildQuery(params as Record<string, string | number | boolean | undefined>);
-  return apiFetch<PaginatedResponse<Resident>>(`/api/Residents/AllResidents${query}`);
+  const data = await apiFetch<PaginatedResponse<unknown>>(`/api/Residents/AllResidents${query}`);
+
+  return {
+    items: (data.items ?? data.Items ?? []).map(normalizeResidentFromApi),
+    totalCount: data.totalCount ?? data.TotalCount ?? 0,
+  };
 }
 
 /** @deprecated Use getResidentCaseRecord */
@@ -133,6 +155,10 @@ export function addResident(data: Partial<Resident>) {
 /** @deprecated Use updateResidentCaseRecord */
 export function updateResident(id: number, data: Partial<Resident>) {
   return updateResidentCaseRecord(id, data as Resident);
+}
+
+export function fetchSocialWorkers() {
+  return apiFetch<SocialWorkerOption[]>('/api/Residents/SocialWorkers');
 }
 
 /** @deprecated Not implemented on current API */

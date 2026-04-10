@@ -24,6 +24,8 @@ const PartnersPage = lazy(() => import('./pages/PartnersPage'));
 const CaseConferencesPage = lazy(() => import('./pages/CaseConferencesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
+const ResidentIntakePage = lazy(() => import('./pages/ResidentIntakePage'));
+const FormsPage = lazy(() => import('./pages/FormsPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 
 function RouteFallback() {
@@ -56,6 +58,21 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route path="/admin" element={<DashboardPage />} />
                 <Route path="/admin/caseload" element={<CaseloadPage />} />
+                <Route path="/admin/residents/new" element={<ResidentIntakePage />} />
+                <Route path="/admin/residents/:id/edit" element={<ResidentIntakePage />} />
+                <Route path="/admin/forms" element={<FormsPage />} />
+                <Route path="/admin/forms/process-recording/:id/edit" element={<FormsPage />} />
+                <Route path="/admin/forms/process-recording" element={<Navigate to="/admin/forms" replace />} />
+                <Route path="/admin/forms/home-visitation/:id/edit" element={<FormsPage />} />
+                <Route path="/admin/forms/home-visitation" element={<Navigate to="/admin/forms" replace />} />
+                <Route path="/admin/forms/intervention-plan/:id/edit" element={<FormsPage />} />
+                <Route path="/admin/forms/intervention-plan" element={<Navigate to="/admin/forms" replace />} />
+                <Route path="/admin/forms/incident-report/:id/edit" element={<FormsPage />} />
+                <Route path="/admin/forms/incident-report" element={<Navigate to="/admin/forms" replace />} />
+                <Route path="/admin/forms/health-wellbeing/:id/edit" element={<FormsPage />} />
+                <Route path="/admin/forms/health-wellbeing" element={<Navigate to="/admin/forms" replace />} />
+                <Route path="/admin/forms/education-record/:id/edit" element={<FormsPage />} />
+                <Route path="/admin/forms/education-record" element={<Navigate to="/admin/forms" replace />} />
                 <Route path="/admin/donors" element={<DonorsPage />} />
                 <Route path="/admin/reports" element={<ReportsPage />} />
                 <Route path="/admin/partners" element={<PartnersPage />} />
@@ -69,6 +86,36 @@ function App() {
                 <Route path="/admin/accounts/create" element={<StaffCreateUserPage />} />
                 <Route path="/admin/create-user" element={<Navigate to="/admin/accounts/create" replace />} />
                 <Route path="/manager/caseload" element={<CaseloadPage />} />
+                <Route path="/manager/residents/new" element={<ResidentIntakePage />} />
+                <Route path="/manager/residents/:id/edit" element={<ResidentIntakePage />} />
+                <Route path="/manager/forms" element={<FormsPage />} />
+                <Route path="/manager/forms/process-recording/:id/edit" element={<FormsPage />} />
+                <Route path="/manager/forms/process-recording" element={<Navigate to="/manager/forms" replace />} />
+                <Route path="/manager/forms/home-visitation/:id/edit" element={<FormsPage />} />
+                <Route path="/manager/forms/home-visitation" element={<Navigate to="/manager/forms" replace />} />
+                <Route path="/manager/forms/intervention-plan/:id/edit" element={<FormsPage />} />
+                <Route path="/manager/forms/intervention-plan" element={<Navigate to="/manager/forms" replace />} />
+                <Route path="/manager/forms/incident-report/:id/edit" element={<FormsPage />} />
+                <Route path="/manager/forms/incident-report" element={<Navigate to="/manager/forms" replace />} />
+                <Route path="/manager/forms/health-wellbeing/:id/edit" element={<FormsPage />} />
+                <Route path="/manager/forms/health-wellbeing" element={<Navigate to="/manager/forms" replace />} />
+                <Route path="/manager/forms/education-record/:id/edit" element={<FormsPage />} />
+                <Route path="/manager/forms/education-record" element={<Navigate to="/manager/forms" replace />} />
+                <Route path="/manager/create-user" element={<StaffCreateUserPage />} />
+                <Route path="/staff" element={<DashboardPage />} />
+                <Route path="/staff/forms" element={<FormsPage />} />
+                <Route path="/staff/forms/process-recording/:id/edit" element={<FormsPage />} />
+                <Route path="/staff/forms/process-recording" element={<Navigate to="/staff/forms" replace />} />
+                <Route path="/staff/forms/home-visitation/:id/edit" element={<FormsPage />} />
+                <Route path="/staff/forms/home-visitation" element={<Navigate to="/staff/forms" replace />} />
+                <Route path="/staff/forms/intervention-plan/:id/edit" element={<FormsPage />} />
+                <Route path="/staff/forms/intervention-plan" element={<Navigate to="/staff/forms" replace />} />
+                <Route path="/staff/forms/incident-report/:id/edit" element={<FormsPage />} />
+                <Route path="/staff/forms/incident-report" element={<Navigate to="/staff/forms" replace />} />
+                <Route path="/staff/forms/health-wellbeing/:id/edit" element={<FormsPage />} />
+                <Route path="/staff/forms/health-wellbeing" element={<Navigate to="/staff/forms" replace />} />
+                <Route path="/staff/forms/education-record/:id/edit" element={<FormsPage />} />
+                <Route path="/staff/forms/education-record" element={<Navigate to="/staff/forms" replace />} />
                 <Route path="/manager/accounts" element={<AccountsPage />} />
                 <Route path="/manager/accounts/create" element={<StaffCreateUserPage />} />
                 <Route path="/manager/create-user" element={<Navigate to="/manager/accounts/create" replace />} />
@@ -77,6 +124,19 @@ function App() {
                 <Route path="/staff/accounts" element={<AccountsPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/dashboard/caseload" element={<CaseloadPage />} />
+                <Route path="/dashboard/forms" element={<FormsPage />} />
+                <Route path="/dashboard/forms/process-recording/:id/edit" element={<FormsPage />} />
+                <Route path="/dashboard/forms/process-recording" element={<Navigate to="/dashboard/forms" replace />} />
+                <Route path="/dashboard/forms/home-visitation/:id/edit" element={<FormsPage />} />
+                <Route path="/dashboard/forms/home-visitation" element={<Navigate to="/dashboard/forms" replace />} />
+                <Route path="/dashboard/forms/intervention-plan/:id/edit" element={<FormsPage />} />
+                <Route path="/dashboard/forms/intervention-plan" element={<Navigate to="/dashboard/forms" replace />} />
+                <Route path="/dashboard/forms/incident-report/:id/edit" element={<FormsPage />} />
+                <Route path="/dashboard/forms/incident-report" element={<Navigate to="/dashboard/forms" replace />} />
+                <Route path="/dashboard/forms/health-wellbeing/:id/edit" element={<FormsPage />} />
+                <Route path="/dashboard/forms/health-wellbeing" element={<Navigate to="/dashboard/forms" replace />} />
+                <Route path="/dashboard/forms/education-record/:id/edit" element={<FormsPage />} />
+                <Route path="/dashboard/forms/education-record" element={<Navigate to="/dashboard/forms" replace />} />
               </Route>
             </Route>
           </Routes>

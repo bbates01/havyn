@@ -8,12 +8,23 @@ export function fetchEducationRecords(params: {
   residentId?: number;
 }) {
   const query = buildQuery(params as Record<string, string | number | boolean | undefined>);
-  return apiFetch<PaginatedResponse<EducationRecord>>(`/api/education-records${query}`);
+  return apiFetch<PaginatedResponse<EducationRecord>>(`/api/EducationRecords/AllRecords${query}`);
+}
+
+export function getEducationRecord(id: number) {
+  return apiFetch<EducationRecord>(`/api/EducationRecords/GetRecord/${id}`);
 }
 
 export function addEducationRecord(data: Partial<EducationRecord>) {
-  return apiFetch<EducationRecord>('/api/education-records', {
+  return apiFetch<EducationRecord>('/api/EducationRecords/AddRecord', {
     method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateEducationRecord(id: number, data: Partial<EducationRecord>) {
+  return apiFetch<EducationRecord>(`/api/EducationRecords/UpdateRecord/${id}`, {
+    method: 'PUT',
     body: JSON.stringify(data),
   });
 }

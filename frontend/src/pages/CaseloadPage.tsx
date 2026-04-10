@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { apiFetch } from '../api/apiHelper';
 import { useAuth } from '../context/AuthContext';
@@ -411,6 +411,7 @@ function DetailPanel({
   safehouses,
   reintegrationRefs,
   onClose,
+  onEdit,
 }: {
   resident: Resident;
   prediction: ResidentPrediction | undefined;
@@ -418,6 +419,7 @@ function DetailPanel({
   safehouses: Safehouse[];
   reintegrationRefs: Record<string, ReintegrationRef> | null;
   onClose: () => void;
+  onEdit?: () => void;
 }) {
   const [showFamily, setShowFamily] = useState(false);
 
@@ -557,14 +559,24 @@ function DetailPanel({
       }}
     >
       <div className="p-4">
-        {/* Close button */}
+        {/* Header */}
         <div className="d-flex justify-content-between align-items-start mb-3">
           <h5 className="fw-bold mb-0">{resident.internalCode}</h5>
-          <button
-            className="btn-close"
-            onClick={onClose}
-            aria-label="Close"
-          />
+          <div className="d-flex align-items-center gap-2">
+            {onEdit && (
+              <button
+                className="btn btn-outline-primary btn-sm"
+                onClick={onEdit}
+              >
+                Edit
+              </button>
+            )}
+            <button
+              className="btn-close"
+              onClick={onClose}
+              aria-label="Close"
+            />
+          </div>
         </div>
 
         {/* Section A: Identity Header */}
@@ -783,6 +795,7 @@ function DetailPanel({
 
 export default function CaseloadPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   const role: 'admin' | 'manager' | 'staff' | null = user?.roles.includes(
     'Admin'
@@ -793,6 +806,9 @@ export default function CaseloadPage() {
       : user?.roles.includes('SocialWorker')
         ? 'staff'
         : null;
+
+  const canWriteIntake = role === 'admin' || role === 'manager';
+  const basePath = role === 'manager' ? '/manager' : '/admin';
 
   const safehouseId = user?.safehouseId ?? null;
   const workerCode = user?.socialWorkerCode ?? null;
@@ -1072,25 +1088,41 @@ export default function CaseloadPage() {
     >
       {/* Role heading */}
       {role === 'admin' && (
-        <div className="mb-3">
-          <h4 className="fw-bold mb-1">All Safehouses — Caseload</h4>
-          <p className="text-muted mb-0">
-            {filteredResidents.length} resident
-            {filteredResidents.length !== 1 ? 's' : ''} across all safehouses
-          </p>
+        <div className="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h4 className="fw-bold mb-1">All Safehouses — Caseload</h4>
+            <p className="text-muted mb-0">
+              {filteredResidents.length} resident
+              {filteredResidents.length !== 1 ? 's' : ''} across all safehouses
+            </p>
+          </div>
+          <button
+            className="btn btn-theme-primary btn-sm"
+            onClick={() => navigate(`${basePath}/residents/new`)}
+          >
+            + New Resident
+          </button>
         </div>
       )}
       {role === 'manager' && (
-        <div className="mb-3">
-          <h4 className="fw-bold mb-1">
-            {safehouseId != null
-              ? `${safehouseCityLabel(data.safehouses, safehouseId)} — Caseload`
-              : 'Your Safehouse — Caseload'}
-          </h4>
-          <p className="text-muted mb-0">
-            {filteredResidents.length} resident
-            {filteredResidents.length !== 1 ? 's' : ''}
-          </p>
+        <div className="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h4 className="fw-bold mb-1">
+              {safehouseId != null
+                ? `${safehouseCityLabel(data.safehouses, safehouseId)} — Caseload`
+                : 'Your Safehouse — Caseload'}
+            </h4>
+            <p className="text-muted mb-0">
+              {filteredResidents.length} resident
+              {filteredResidents.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <button
+            className="btn btn-theme-primary btn-sm"
+            onClick={() => navigate(`${basePath}/residents/new`)}
+          >
+            + New Resident
+          </button>
         </div>
       )}
       {role === 'staff' && (
@@ -1194,6 +1226,14 @@ export default function CaseloadPage() {
           safehouses={data.safehouses}
           reintegrationRefs={data.reintegrationRefs}
           onClose={() => setSelectedId(null)}
+          onEdit={
+            canWriteIntake
+              ? () =>
+                  navigate(
+                    `${basePath}/residents/${selectedResident.residentId}/edit`
+                  )
+              : undefined
+          }
         />
       )}
     </div>

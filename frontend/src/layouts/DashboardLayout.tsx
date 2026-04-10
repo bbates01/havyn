@@ -1,9 +1,9 @@
-import { Outlet, NavLink} from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { useAuth } from '../context/AuthContext';
 
 function DashboardLayout() {
   const { user } = useAuth();
-  // const { pathname } = useLocation();
 
   const role: 'admin' | 'manager' | 'staff' | null = user?.roles.includes('Admin')
     ? 'admin'
@@ -19,19 +19,21 @@ function DashboardLayout() {
         : role === 'staff' ? '/staff'
           : '/dashboard';
 
-  const dashPath      = base;
-  const caseloadPath  = `${base}/caseload`;
-  const donorsPath    = `${base}/donors`;
-  const partnersPath  = `${base}/partners`;
+  const dashPath = base;
+  const caseloadPath = `${base}/caseload`;
+  const donorsPath = `${base}/donors`;
+  const partnersPath = `${base}/partners`;
   const caseConferencesPath = `${base}/case-conferences`;
-  const reportsPath   = `${base}/reports`;
+  const reportsPath = `${base}/reports`;
   const accountsPath = `${base}/accounts`;
+  const formsPath = `${base}/forms`;
 
-  const showReportsTab  = role === 'admin' || role === 'manager';
-  const showDonorsTab   = role === 'admin' || role === 'manager';
+  const showReportsTab = role === 'admin' || role === 'manager';
+  const showDonorsTab = role === 'admin' || role === 'manager';
   const showPartnersTab = role === 'admin' || role === 'manager';
   const showCaseConferencesTab = role === 'manager';
   const showAccountsTab = role === 'admin' || role === 'manager' || role === 'staff';
+  const showFormsNav = role === 'admin' || role === 'manager' || role === 'staff';
 
   return (
     <>
@@ -116,6 +118,18 @@ function DashboardLayout() {
                   to={accountsPath}
                 >
                   Accounts
+                </NavLink>
+              </li>
+            )}
+            {showFormsNav && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={formsPath}
+                >
+                  Forms
                 </NavLink>
               </li>
             )}

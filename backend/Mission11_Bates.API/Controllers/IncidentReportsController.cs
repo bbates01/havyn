@@ -87,6 +87,9 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddIncident")]
         public async Task<IActionResult> AddIncident([FromBody] IncidentReport newIncident)
         {
+            newIncident.IncidentId = _context.IncidentReports.Any()
+                ? _context.IncidentReports.Max(i => i.IncidentId) + 1
+                : 1;
             var scope = await _residentAccess.GetScopeAsync(User);
             if (!_residentAccess.ScopeAllowsCaseAccess(scope))
                 return StatusCode(403, new { message = "Account is not configured for case access." });
@@ -119,6 +122,14 @@ namespace Mission11_Bates.Controllers
             if (!await _residentAccess.CanAccessResidentAsync(_context, scope, existing.ResidentId))
                 return NotFound(new { message = "Incident report not found" });
 
+            existing.ResidentId = updatedIncident.ResidentId;
+            existing.SafehouseId = updatedIncident.SafehouseId;
+            existing.IncidentDate = updatedIncident.IncidentDate;
+            existing.ReportedBy = updatedIncident.ReportedBy;
+            existing.IncidentType = updatedIncident.IncidentType;
+            existing.Severity = updatedIncident.Severity;
+            existing.Description = updatedIncident.Description;
+            existing.ResponseTaken = updatedIncident.ResponseTaken;
             existing.Resolved = updatedIncident.Resolved;
             existing.ResolutionDate = updatedIncident.ResolutionDate;
             existing.FollowUpRequired = updatedIncident.FollowUpRequired;
