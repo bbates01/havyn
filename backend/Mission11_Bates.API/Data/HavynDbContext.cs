@@ -43,6 +43,11 @@ namespace Mission11_Bates.Data
                 .Property(p => p.PartnerId)
                 .ValueGeneratedNever();
 
+            // In our current DB schema, PlanId is not auto-generated.
+            modelBuilder.Entity<InterventionPlan>()
+                .Property(p => p.PlanId)
+                .ValueGeneratedNever();
+
             modelBuilder.Entity<Supporter>()
                 .HasOne(s => s.User)
                 .WithMany()

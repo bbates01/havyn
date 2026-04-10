@@ -23,12 +23,14 @@ function DashboardLayout() {
   const caseloadPath  = `${base}/caseload`;
   const donorsPath    = `${base}/donors`;
   const partnersPath  = `${base}/partners`;
+  const caseConferencesPath = `${base}/case-conferences`;
   const reportsPath   = `${base}/reports`;
   const createUserPath = `${base}/create-user`;
 
   const showReportsTab  = role === 'admin' || role === 'manager';
   const showDonorsTab   = role === 'admin' || role === 'manager';
   const showPartnersTab = role === 'admin' || role === 'manager';
+  const showCaseConferencesTab = role === 'manager';
   const showCreateUser  = role === 'admin' || role === 'manager';
 
   return (
@@ -78,6 +80,18 @@ function DashboardLayout() {
                   to={partnersPath}
                 >
                   Partners
+                </NavLink>
+              </li>
+            )}
+            {showCaseConferencesTab && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={caseConferencesPath}
+                >
+                  Case Conferences
                 </NavLink>
               </li>
             )}

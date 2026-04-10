@@ -19,6 +19,7 @@ const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const DonorsPage = lazy(() => import('./pages/DonorsPage'));
 const PartnersPage = lazy(() => import('./pages/PartnersPage'));
+const CaseConferencesPage = lazy(() => import('./pages/CaseConferencesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
 
@@ -56,6 +57,7 @@ function App() {
                 <Route path="/manager/caseload" element={<CaseloadPage />} />
                 <Route path="/manager/donors" element={<DonorsPage />} />
                 <Route path="/manager/partners" element={<PartnersPage />} />
+                <Route path="/manager/case-conferences" element={<CaseConferencesPage />} />
                 <Route path="/manager/reports" element={<ReportsPage />} />
                 <Route path="/admin/create-user" element={<StaffCreateUserPage />} />
                 <Route path="/manager/create-user" element={<StaffCreateUserPage />} />

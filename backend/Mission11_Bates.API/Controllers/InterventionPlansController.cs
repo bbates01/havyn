@@ -82,6 +82,8 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddPlan")]
         public IActionResult AddPlan([FromBody] InterventionPlan newPlan)
         {
+            // Assign PlanId explicitly (DB column is NOT auto-generated).
+            newPlan.PlanId = (_context.InterventionPlans.Max(p => (int?)p.PlanId) ?? 0) + 1;
             _context.InterventionPlans.Add(newPlan);
             _context.SaveChanges();
             return Ok(newPlan);
