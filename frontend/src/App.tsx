@@ -42,8 +42,9 @@ function App() {
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/donor" element={<DonorHomePage />} />
-              <Route path="/donor-impact" element={<DonorImpactPage />} />
+              <Route path="/donor" element={<DonorImpactPage />} />
+              <Route path="/donor/dashboard" element={<DonorHomePage />} />
+              <Route path="/donor-impact" element={<Navigate to="/donor" replace />} />
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

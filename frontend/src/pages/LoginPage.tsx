@@ -33,7 +33,7 @@ function LoginPage() {
     if (user.roles.includes('Admin')) navigate('/admin');
     else if (user.roles.includes('Manager')) navigate('/manager');
     else if (user.roles.includes('SocialWorker')) navigate('/staff');
-    else if (user.roles.includes('Donor')) navigate('/donor');
+    else if (user.roles.includes('Donor')) navigate('/donor/dashboard');
     else navigate('/');
   };
 
