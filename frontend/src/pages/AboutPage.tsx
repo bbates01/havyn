@@ -16,7 +16,7 @@ function AboutPage() {
               A registered nonprofit built for the girls who need us most
             </h2>
             <p>
-              Lighthouse Sanctuary is a 501(c)(3) organization (EIN 81-3220618)
+              Havyn Sanctuary is a 501(c)(3) organization (EIN 81-3220618)
               created to meet the needs of child survivors of sexual abuse and sex
               trafficking in the Philippines. We provide a safe haven and
               professional rehabilitation services so children can successfully
@@ -24,7 +24,7 @@ function AboutPage() {
             </p>
             <p>
               There is a great need for residential shelters in the Philippines
-              for children trapped in abuse or sexually trafficked. Lighthouse
+              for children trapped in abuse or sexually trafficked. Havyn
               Sanctuary has stepped up to fill that need, serving female survivors
               between the ages of 8 and 18.
             </p>
@@ -127,7 +127,7 @@ function AboutPage() {
               <h3>Referral</h3>
               <p>
                 Cases are referred through the Department of Social Welfare and
-                Development (DSWD) to Lighthouse Sanctuary.
+                Development (DSWD) to Havyn Sanctuary.
               </p>
             </article>
 
