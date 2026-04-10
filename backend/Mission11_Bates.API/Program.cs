@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -12,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.NumberHandling =
         JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });
@@ -36,6 +39,7 @@ if (string.IsNullOrWhiteSpace(defaultConnectionString) ||
 }
 
 builder.Services.AddDbContext<HavynDbContext>(options => options.UseNpgsql(defaultConnectionString));
+builder.Services.AddScoped<IResidentAccessService, ResidentAccessService>();
 
 // Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -90,6 +94,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CaseAccess", p => p.RequireRole("Admin", "Manager", "SocialWorker"));
     options.AddPolicy("DonorAccess", p => p.RequireRole("Donor"));
     options.AddPolicy("InternalStaff", p => p.RequireRole("Admin", "Manager", "SocialWorker"));
+    options.AddPolicy("DonorRecordManagement", p => p.RequireRole("Admin", "Manager"));
+    options.AddPolicy("StaffAccountManagement", p => p.RequireRole("Admin", "Manager"));
 });
 
 // CORS
