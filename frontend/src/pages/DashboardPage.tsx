@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { apiFetch } from '../api/apiHelper';
+import { useAuth } from '../context/AuthContext';
 import {
   PieChart,
   Pie,
@@ -13,23 +15,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-
-// ─── TEMP: Replace with real auth context once auth is complete ───────────────
-// To test different roles, change the role field below:
-//   'admin'   → Executive Admin — sees all safehouses aggregated
-//   'manager' → Regional Manager — sees only their assigned safehouse
-//   'staff'   → Social Worker — sees only their assigned residents
-const currentUser = {
-  role: 'manager' as 'admin' | 'manager' | 'staff',
-  name: 'manager User',
-  safehouseId: null as number | null, // null for admin, integer FK for manager
-  workerCode: null as string | null, // e.g. 'SW-15' for staff, null otherwise
-};
-// Examples:
-//   Admin:   { role:'admin',   name:'Admin User',       safehouseId:null, workerCode:null }
-//   Manager: { role:'manager', name:'Regional Manager',  safehouseId:4,   workerCode:null }
-//   Staff:   { role:'staff',   name:'Social Worker',     safehouseId:null, workerCode:'SW-15' }
-// ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Types (all backed by real DB tables) ────────────────────────────────────
 
@@ -142,6 +127,20 @@ interface Safehouse {
   notes: string | null;
 }
 
+/** User-facing label: prefer city over internal name or numeric id. */
+function safehouseCityLabel(
+  safehouses: Safehouse[],
+  safehouseId: number
+): string {
+  const sh = safehouses.find((s) => s.safehouseId === safehouseId);
+  if (!sh) return 'Unknown location';
+  const city = sh.city?.trim();
+  if (city) return city;
+  const name = sh.name?.trim();
+  if (name) return name;
+  return 'Unknown location';
+}
+
 interface PaginatedResponse<T> {
   items: T[];
   totalCount: number;
@@ -184,9 +183,9 @@ function pct(value: number | null): string {
   return `${Math.round(value * 100)}%`;
 }
 
-function getScopeParams(): string {
-  if (currentUser.role === 'manager' && currentUser.safehouseId) {
-    return `&safehouseId=${currentUser.safehouseId}`;
+function getScopeParams(role: string | null, safehouseId: number | null): string {
+  if (role === 'manager' && safehouseId) {
+    return `&safehouseId=${safehouseId}`;
   }
   return '';
 }
@@ -202,7 +201,12 @@ const RISK_ORDER = ['Low', 'Medium', 'High', 'Critical'];
 
 // ─── Data Hook ───────────────────────────────────────────────────────────────
 
-function useDashboardData(safehouseFilterIds: number[]) {
+function useDashboardData(
+  safehouseFilterIds: number[],
+  role: string | null,
+  safehouseId: number | null,
+  workerCode: string | null,
+) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
@@ -213,7 +217,7 @@ function useDashboardData(safehouseFilterIds: number[]) {
     setLoading(true);
     setErrors([]);
 
-    const scope = getScopeParams();
+    const scope = getScopeParams(role, safehouseId);
     const filterScope =
       safehouseFilterIds.length === 1
         ? `&safehouseId=${safehouseFilterIds[0]}`
@@ -331,9 +335,11 @@ function useDashboardData(safehouseFilterIds: number[]) {
     }
 
     // Staff only sees residents assigned to them (matched by worker code)
-    if (currentUser.role === 'staff' && currentUser.workerCode) {
+    // TODO: backend does not yet accept ?workerCode on /api/Residents/AllResidents;
+    // filtering is client-side for now. Pass workerCode once backend support is added.
+    if (role === 'staff' && workerCode) {
       finalData.residents = finalData.residents.filter(
-        (r) => r.assignedSocialWorker === currentUser.workerCode
+        (r) => r.assignedSocialWorker === workerCode
       );
       const staffResidentIds = new Set(
         finalData.residents.map((r) => r.residentId)
@@ -350,7 +356,7 @@ function useDashboardData(safehouseFilterIds: number[]) {
     setErrors(errs);
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterKey]);
+  }, [filterKey, role, safehouseId, workerCode]);
 
   useEffect(() => {
     fetchAll();
@@ -471,19 +477,31 @@ function DistBadge({
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+
+  const role: 'admin' | 'manager' | 'staff' | null = user?.roles.includes('Admin')
+    ? 'admin'
+    : user?.roles.includes('Manager')
+      ? 'manager'
+      : user?.roles.includes('SocialWorker')
+        ? 'staff'
+        : null;
+
+  const safehouseId = user?.safehouseId ?? null;
+  const workerCode = user?.socialWorkerCode ?? null;
+
   const [selectedSafehouses, setSelectedSafehouses] = useState<Set<number>>(
     new Set()
   );
-  // filterOpen state no longer needed — sidebar is always visible for admin
 
   const safehouseFilterIds = useMemo(() => {
-    if (currentUser.role !== 'admin') {
-      return currentUser.safehouseId != null ? [currentUser.safehouseId] : [];
+    if (role !== 'admin') {
+      return safehouseId != null ? [safehouseId] : [];
     }
     return [...selectedSafehouses];
-  }, [selectedSafehouses]);
+  }, [selectedSafehouses, role, safehouseId]);
 
-  const { data, loading, errors } = useDashboardData(safehouseFilterIds);
+  const { data, loading, errors } = useDashboardData(safehouseFilterIds, role, safehouseId, workerCode);
   const [progressBandFilter, setProgressBandFilter] =
     useState<ProgressBand | null>(null);
 
@@ -649,7 +667,7 @@ export default function DashboardPage() {
         };
         return {
           safehouseId: sh.safehouseId,
-          name: `SH-${sh.safehouseId}`,
+          name: sh.city?.trim() || sh.name?.trim() || 'Unknown location',
           Health: avg((p) => p.healthProb),
           Education: avg((p) => p.educationProb),
           Emotional: avg((p) => p.emotionalProb),
@@ -657,7 +675,7 @@ export default function DashboardPage() {
           residentCount: preds.length,
         };
       })
-      .sort((a, b) => a.safehouseId - b.safehouseId);
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     // Incidents in last 60 days
     const sixtyDaysAgo = new Date();
@@ -727,6 +745,23 @@ export default function DashboardPage() {
     };
   }, [data]);
 
+  // ─── Auth guards ──────────────────────────────────────────────────────────
+
+  if (authLoading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center"
+           style={{ minHeight: '60vh' }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || role === null) {
+    return <Navigate to="/login" replace />;
+  }
+
   // ─── Loading / Error states ────────────────────────────────────────────────
 
   if (loading) {
@@ -750,13 +785,6 @@ export default function DashboardPage() {
     );
   }
 
-  const safehouseName =
-    currentUser.safehouseId != null
-      ? (data.safehouses.find(
-          (s) => s.safehouseId === currentUser.safehouseId
-        )?.name ?? 'Your Safehouse')
-      : null;
-
   return (
     <div className="container-fluid py-4 px-3 px-md-4">
       {/* Error banner */}
@@ -774,27 +802,30 @@ export default function DashboardPage() {
       {/* ── Role Context Header ────────────────────────────────────────── */}
       <div className="mb-4">
         <h4 className="mb-1 fw-bold">
-          Welcome back, {currentUser.name}
+          Welcome back, {user?.userName ?? user?.email ?? 'User'}
         </h4>
         <p className="text-muted mb-0">
-          {currentUser.role === 'admin' &&
+          {role === 'admin' &&
             (selectedSafehouses.size > 0
               ? `${selectedSafehouses.size} Safehouse${selectedSafehouses.size > 1 ? 's' : ''} Selected — Filtered View`
               : 'All Safehouses — Aggregated View')}
-          {currentUser.role === 'manager' &&
-            `${safehouseName} — Your Safehouse`}
-          {currentUser.role === 'staff' && 'Your Caseload'}
+          {role === 'manager' &&
+            (safehouseId != null
+              ? `${safehouseCityLabel(data.safehouses, safehouseId)} — Your Safehouse`
+              : 'Your Safehouse')}
+          {role === 'staff' &&
+            `Your Caseload — Worker ${workerCode}`}
         </p>
       </div>
 
-      <div className="d-flex gap-4">
+      <div className="d-flex gap-4 align-items-start">
       {/* ── Main content column ──────────────────────────────────────── */}
       <div style={{ flex: 1, minWidth: 0 }}>
 
       {/* ── Section 1: Stat Cards ──────────────────────────────────────── */}
       <div className="row justify-content-center">
         <StatCard
-          label={currentUser.role === 'staff' ? 'Assigned Residents' : 'Active Residents'}
+          label={role === 'staff' ? 'Assigned Residents' : 'Active Residents'}
           value={derived.activeResidents.length}
           color="text-primary"
         />
@@ -809,14 +840,14 @@ export default function DashboardPage() {
                 : 'text-danger'
           }
         />
-        {currentUser.role !== 'staff' && (
+        {role !== 'staff' && (
           <StatCard
             label="Total Donations"
             value={formatPeso(derived.totalDonations)}
             onClick={() => setShowDonationSummary(true)}
           />
         )}
-        {currentUser.role !== 'staff' && (
+        {role !== 'staff' && (
           <StatCard
             label={"Incidents\n(Last 60 Days)"}
             value={derived.incidents60Count}
@@ -824,7 +855,7 @@ export default function DashboardPage() {
             onClick={() => setShowIncidentSummary(true)}
           />
         )}
-        {currentUser.role !== 'staff' && (
+        {role !== 'staff' && (
           <StatCard
             label="Unresolved High Severity"
             value={derived.unresolvedHighSeverity}
@@ -1012,42 +1043,49 @@ export default function DashboardPage() {
                     No active residents with risk data.
                   </p>
                 ) : (
-                  <ResponsiveContainer width="100%" height={360}>
+                  <ResponsiveContainer width="100%" height={420}>
                     <PieChart>
                       <Pie
                         data={derived.riskDonut}
                         cx="50%"
-                        cy="45%"
+                        cy="48%"
                         innerRadius={70}
                         outerRadius={120}
                         dataKey="value"
                         paddingAngle={2}
                         label={// eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (props: any) => {
-                          const { name: _name, value: _value, x: _x, y: _y } = props;
+                          const { name: _name, value: _value, cx: _cx, cy: _cy, midAngle, outerRadius: _or } = props;
                           const name = String(_name ?? '');
                           const value = Number(_value ?? 0);
-                          const x = Number(_x ?? 0);
-                          const y = Number(_y ?? 0);
+                          const cx = Number(_cx ?? 0);
+                          const cy = Number(_cy ?? 0);
+                          const or = Number(_or ?? 120);
+                          const angle = Number(midAngle ?? 0);
+                          const RADIAN = Math.PI / 180;
+                          const radius = or + 30;
+                          const x = cx + radius * Math.cos(-angle * RADIAN);
+                          const y = cy + radius * Math.sin(-angle * RADIAN);
+                          const isRight = x > cx;
                           const color = RISK_COLORS[name] ?? '#6c757d';
                           const labelText = `${name}: ${value}`;
-                          const gap = 6;
-                          const tx = x > 200 ? x + gap : x - gap;
+                          const textW = labelText.length * 7.5 + 12;
+                          const rectX = isRight ? x - 6 : x - textW + 6;
                           return (
                             <g>
                               <rect
-                                x={tx > 200 ? tx - 6 : tx - labelText.length * 7.5 - 6}
+                                x={rectX}
                                 y={y - 12}
-                                width={labelText.length * 7.5 + 12}
+                                width={textW}
                                 height={24}
                                 rx={6}
                                 fill={color}
                                 fillOpacity={0.12}
                               />
                               <text
-                                x={tx}
+                                x={x}
                                 y={y}
-                                textAnchor={tx > 200 ? 'start' : 'end'}
+                                textAnchor={isRight ? 'start' : 'end'}
                                 dominantBaseline="central"
                                 fontSize={13}
                                 fontWeight={600}
@@ -1069,11 +1107,33 @@ export default function DashboardPage() {
                           />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip
+                        content={// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        ({ active, payload }: any) => {
+                          if (!active || !payload?.length) return null;
+                          const entry = payload[0];
+                          const name = String(entry.name ?? '');
+                          const value = Number(entry.value ?? 0);
+                          const color = RISK_COLORS[name] ?? '#6c757d';
+                          return (
+                            <div style={{
+                              background: '#fff',
+                              border: `1px solid ${color}`,
+                              borderRadius: 6,
+                              padding: '6px 12px',
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color,
+                            }}>
+                              {name}: {value}
+                            </div>
+                          );
+                        }}
+                      />
                       <Legend />
                       <text
                         x="50%"
-                        y="42%"
+                        y="46%"
                         textAnchor="middle"
                         dominantBaseline="middle"
                         className="fw-bold"
@@ -1136,9 +1196,9 @@ export default function DashboardPage() {
         );
 
         const performanceTitle =
-          currentUser.role === 'staff'
+          role === 'staff'
             ? 'Performance of Assigned Residents'
-            : currentUser.role === 'manager'
+            : role === 'manager'
               ? 'Safehouse Performance'
               : 'Safehouse Performance Comparison';
 
@@ -1176,7 +1236,7 @@ export default function DashboardPage() {
           </div>
         );
 
-        if (currentUser.role === 'admin') {
+        if (role === 'admin') {
           return (
             <>
               {/* Admin: Risk + Incidents side-by-side, then Performance full-width */}
@@ -1230,7 +1290,7 @@ export default function DashboardPage() {
                 <div className="card shadow-sm">
                   <div className="card-body">
                     <h6 className="card-title fw-bold">
-                      {currentUser.role === 'staff' ? "Havyn's Recent Incidents" : 'Recent Incidents'}
+                      {role === 'staff' ? "Havyn's Recent Incidents" : 'Recent Incidents'}
                     </h6>
                     {derived.recentIncidents.length === 0 ? (
                       <p className="text-muted mb-0">No incidents recorded.</p>
@@ -1277,7 +1337,7 @@ export default function DashboardPage() {
       })()}
 
       {/* ── Section 5: Recent Donations (full width, hidden for staff) ── */}
-      {currentUser.role !== 'staff' && (
+      {role !== 'staff' && (
         <div className="row mb-4">
           <div className="col-12">
             <div className="card shadow-sm">
@@ -1323,12 +1383,12 @@ export default function DashboardPage() {
       </div>{/* end main content column */}
 
       {/* ── Safehouse Filter Sidebar (admin only) ────────────────────── */}
-      {currentUser.role === 'admin' && (
+      {role === 'admin' && (
         <div
-          style={{ width: 220, flexShrink: 0 }}
+          style={{ width: 220, flexShrink: 0, alignSelf: 'flex-start' }}
           className="d-none d-lg-block"
         >
-          <div className="card shadow-sm position-sticky" style={{ top: 24 }}>
+          <div className="card shadow-sm dashboard-filter-sticky">
             <div className="card-body py-3 px-3">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <small className="fw-bold">Filter Safehouses</small>
@@ -1357,7 +1417,7 @@ export default function DashboardPage() {
                       className="form-check-label small"
                       htmlFor={`sh-${s.safehouseId}`}
                     >
-                      {s.name}
+                      {s.city?.trim() || s.name}
                     </label>
                   </div>
                 ))}
@@ -1528,7 +1588,9 @@ export default function DashboardPage() {
                           <tr>
                             <td className="text-muted" style={{ width: '40%' }}>Safehouse</td>
                             <td className="fw-semibold">
-                              {safehouse ? `${safehouse.name} (${safehouse.region})` : `#${resident.safehouseId}`}
+                              {safehouse
+                                ? `${safehouse.city?.trim() || safehouse.name}${safehouse.region ? `, ${safehouse.region}` : ''}`
+                                : safehouseCityLabel(data.safehouses, resident.safehouseId)}
                             </td>
                           </tr>
                           {resident.assignedSocialWorker && (
@@ -1692,7 +1754,9 @@ export default function DashboardPage() {
                       <tr>
                         <td className="text-muted">Safehouse</td>
                         <td className="fw-semibold">
-                          {safehouse ? `${safehouse.name} (${safehouse.region})` : `#${inc.safehouseId}`}
+                          {safehouse
+                            ? `${safehouse.city?.trim() || safehouse.name}${safehouse.region ? `, ${safehouse.region}` : ''}`
+                            : safehouseCityLabel(data.safehouses, inc.safehouseId)}
                         </td>
                       </tr>
                       <tr>
@@ -1843,12 +1907,9 @@ export default function DashboardPage() {
                         </thead>
                         <tbody>
                           {allocations.map((a) => {
-                            const sh = data.safehouses.find(
-                              (s) => s.safehouseId === a.safehouseId
-                            );
                             return (
                               <tr key={a.allocationId}>
-                                <td>{sh?.name ?? `#${a.safehouseId}`}</td>
+                                <td>{safehouseCityLabel(data.safehouses, a.safehouseId)}</td>
                                 <td>{a.programArea}</td>
                                 <td className="text-end fw-semibold">
                                   {formatPeso(a.amountAllocated)}
@@ -2068,9 +2129,14 @@ export default function DashboardPage() {
               <div className="modal-content">
                 <div className="modal-header">
                   <div>
-                    <h5 className="modal-title fw-bold mb-0">{sh.name}</h5>
+                    <h5 className="modal-title fw-bold mb-0">
+                      {sh.city?.trim() || sh.name}
+                    </h5>
                     <small className="text-muted">
-                      {sh.safehouseCode} &middot; {sh.city}, {sh.province}, {sh.region}
+                      {sh.name} &middot; {sh.safehouseCode}
+                      {sh.province || sh.region
+                        ? ` · ${[sh.province, sh.region].filter(Boolean).join(', ')}`
+                        : ''}
                     </small>
                   </div>
                   <button
@@ -2265,9 +2331,7 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {residents.map((r) => {
-                          const sh = data.safehouses.find((s) => s.safehouseId === r.safehouseId);
-                          return (
+                        {residents.map((r) => (
                             <tr
                               key={r.residentId}
                               style={{ cursor: 'pointer' }}
@@ -2277,12 +2341,11 @@ export default function DashboardPage() {
                               }}
                             >
                               <td className="fw-semibold">{r.internalCode}</td>
-                              <td>{sh?.name ?? `#${r.safehouseId}`}</td>
+                              <td>{safehouseCityLabel(data.safehouses, r.safehouseId)}</td>
                               <td className="small">{r.assignedSocialWorker ?? '—'}</td>
                               <td>{r.presentAge}</td>
                             </tr>
-                          );
-                        })}
+                        ))}
                       </tbody>
                     </table>
                   )}
@@ -2385,16 +2448,21 @@ export default function DashboardPage() {
                 <table className="table table-hover table-sm mb-0">
                   <thead className="table-light sticky-top">
                     <tr>
+                      <th>City</th>
                       <th>Name</th>
                       <th>Region</th>
-                      <th>City</th>
                       <th className="text-center">Occupancy</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.safehouses
-                      .sort((a, b) => a.safehouseId - b.safehouseId)
+                      .slice()
+                      .sort((a, b) =>
+                        (a.city || '').localeCompare(b.city || '', undefined, {
+                          sensitivity: 'base',
+                        })
+                      )
                       .map((sh) => {
                         const pct = sh.capacityGirls > 0
                           ? Math.round((sh.currentOccupancy / sh.capacityGirls) * 100)
@@ -2408,9 +2476,11 @@ export default function DashboardPage() {
                               setSelectedSafehouse(sh.safehouseId);
                             }}
                           >
-                            <td className="fw-semibold">{sh.name}</td>
+                            <td className="fw-semibold">
+                              {sh.city?.trim() || sh.name}
+                            </td>
+                            <td>{sh.name}</td>
                             <td>{sh.region}</td>
-                            <td>{sh.city}</td>
                             <td className="text-center">
                               <span className="fw-semibold">{sh.currentOccupancy}/{sh.capacityGirls}</span>
                               <span className={`badge ms-1 bg-${pct > 90 ? 'danger' : pct > 70 ? 'warning' : 'success'}`}>

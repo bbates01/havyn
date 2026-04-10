@@ -11,6 +11,8 @@ const DonorImpactPage = lazy(() => import('./pages/DonorImpactPage'));
 const ApiTestPage = lazy(() => import('./pages/ApiTestPage'));
 const MlTestPage = lazy(() => import('./pages/MlTestPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
+const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
 
 function RouteFallback() {
   return (
@@ -26,7 +28,6 @@ function App() {
       <AuthProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            {/* Public routes with shared navbar / footer */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -34,10 +35,17 @@ function App() {
               <Route path="/donor-impact" element={<DonorImpactPage />} />
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
+              <Route element={<DashboardLayout />}>
+                <Route path="/admin" element={<DashboardPage />} />
+                <Route path="/admin/caseload" element={<CaseloadPage />} />
+                <Route path="/manager" element={<DashboardPage />} />
+                <Route path="/manager/caseload" element={<CaseloadPage />} />
+                <Route path="/staff" element={<DashboardPage />} />
+                <Route path="/staff/caseload" element={<CaseloadPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/dashboard/caseload" element={<CaseloadPage />} />
+              </Route>
             </Route>
-            {/* Dashboard — will move behind auth guard once auth is wired */}
-            <Route path="/dashboard" element={<DashboardPage />} />
-            {/* Authenticated dashboard routes will be added here */}
           </Routes>
         </Suspense>
       </AuthProvider>

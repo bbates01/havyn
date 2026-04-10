@@ -1,3 +1,13 @@
+/* ── Layout tokens ── */
+:root {
+  --public-navbar-height: 64px;
+  --dashboard-sticky-filter-gap: 10px;
+  /* Sticky filter clears only the main header (Dashboard/Caseload bar scrolls away) */
+  --dashboard-filter-sticky-top: calc(
+    var(--public-navbar-height) + var(--dashboard-sticky-filter-gap)
+  );
+}
+
 /* ── Shell ── */
 .app-shell {
   min-height: 100vh;
@@ -16,12 +26,13 @@
   align-items: stretch;
   justify-content: space-between;
   padding: 0 clamp(1rem, 4vw, 3.5rem);
-  min-height: 64px;
+  min-height: var(--public-navbar-height);
   border-bottom: 1px solid var(--border);
   background: var(--glass);
   position: sticky;
   top: 0;
-  z-index: 100;
+  /* Above Bootstrap .sticky-top (1020); below modals (~1055) */
+  z-index: 1030;
   backdrop-filter: blur(14px);
 }
 
@@ -402,6 +413,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Dashboard / Caseload tabs — normal flow; scrolls with the page (not sticky) */
+.dashboard-subnav {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+}
+
+/* Admin safehouse filter: sticky under main nav only */
+.dashboard-filter-sticky {
+  position: sticky;
+  top: var(--dashboard-filter-sticky-top);
+  z-index: 1020;
+  max-height: calc(
+    100vh - var(--dashboard-filter-sticky-top) - var(--dashboard-sticky-filter-gap)
+  );
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .visually-hidden {
