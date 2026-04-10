@@ -127,10 +127,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed roles and users on startup
+// Seed roles and users on startup; ensure additive columns exist when EF migration history is behind deployment.
 using (var scope = app.Services.CreateScope())
 {
-    await SeedData.Initialize(scope.ServiceProvider);
+    var sp = scope.ServiceProvider;
+    var db = sp.GetRequiredService<HavynDbContext>();
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'Donations' AND column_name = 'RecurringFrequency') THEN
+                ALTER TABLE "Donations" ADD "RecurringFrequency" text;
+            END IF;
+        END $$;
+        """);
+    await SeedData.Initialize(sp);
 }
 
 app.Run();

@@ -57,7 +57,7 @@ function SignUpPage() {
     try {
       await register(payload);
       await refreshAuth();
-      navigate('/donor');
+      navigate('/donor/dashboard');
     } catch (err) {
       setError(
         err instanceof Error

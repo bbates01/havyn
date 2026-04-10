@@ -42,7 +42,7 @@ function PublicNavbar() {
             </NavLink>
           </li>
           <li>
-            <NavLink to="/donor-impact" onClick={() => setMenuOpen(false)}>
+            <NavLink end to="/donor" onClick={() => setMenuOpen(false)}>
               Donor Impact
             </NavLink>
           </li>

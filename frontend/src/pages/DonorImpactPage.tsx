@@ -1,11 +1,40 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './DonorImpactPage.css';
 
 function DonorImpactPage() {
+  const { user, loading } = useAuth();
+  const donateThroughTo = useMemo(() => {
+    if (!loading && user?.roles?.includes('Donor')) return '/donor/dashboard';
+    return '/login?from=donate';
+  }, [loading, user]);
+
   useEffect(() => {
     document.title = 'Donor Impact | Havyn';
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    // #region agent log
+    fetch('http://127.0.0.1:7610/ingest/17f4b294-de20-4553-b916-4609ea75d936', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6eba7f' },
+      body: JSON.stringify({
+        sessionId: '6eba7f',
+        hypothesisId: 'H1',
+        runId: 'donate-cta',
+        location: 'DonorImpactPage.tsx',
+        message: 'donate CTA resolved',
+        data: {
+          isDonor: !!user?.roles?.includes('Donor'),
+          donateThroughTo,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [loading, user, donateThroughTo]);
 
   return (
     <div className="donor-impact-page">
@@ -73,7 +102,7 @@ function DonorImpactPage() {
                 </article>
               </div>
               <div className="donor-gift-actions">
-                <Link to="/login?from=donate" className="donor-cta-primary">
+                <Link to={donateThroughTo} className="donor-cta-primary">
                   Donate through Havyn
                 </Link>
               </div>
@@ -135,7 +164,7 @@ function DonorImpactPage() {
             </section>
 
             <div className="donor-left-actions">
-              <Link to="/login?from=donate" className="donor-cta-primary">
+              <Link to={donateThroughTo} className="donor-cta-primary">
                 Donate through Havyn
               </Link>
               <Link to="/" className="donor-cta-secondary">

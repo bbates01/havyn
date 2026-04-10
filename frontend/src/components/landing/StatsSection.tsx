@@ -29,7 +29,7 @@ function StatsSection() {
               transformed through safety, education, and compassionate care.
             </p>
             <div className="stats-actions">
-              <Link to="/donor-impact" className="hero-btn-primary">
+              <Link to="/donor" className="hero-btn-primary">
                 See Donor Impact
               </Link>
             </div>
