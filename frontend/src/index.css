@@ -1,17 +1,24 @@
 :root {
-  --primary: #0d7377;
-  --primary-soft: rgba(13, 115, 119, 0.12);
-  --primary-dark: #095456;
-  --accent: #d4a843;
-  --accent-soft: rgba(212, 168, 67, 0.15);
-  --text: #1f2933;
-  --muted: #6b7280;
-  --surface: #f7f8f6;
-  --panel: #ffffff;
-  --border: rgba(15, 23, 42, 0.10);
-  --glass: rgba(255, 255, 255, 0.92);
-  --shadow: 0 20px 30px rgba(15, 23, 42, 0.07);
-  --shadow-lg: 0 35px 45px rgba(15, 23, 42, 0.14);
+  --primary: #8b5e3c;
+  --primary-soft: rgba(139, 94, 60, 0.10);
+  --primary-dark: #6b4830;
+  --accent: #146f85;
+  --accent-soft: rgba(20, 111, 133, 0.12);
+  --green: #4a7c59;
+  --green-soft: rgba(74, 124, 89, 0.08);
+  --text: #33271d;
+  --muted: #7d6e61;
+  --surface: #faf7f2;
+  --surface-warm: #f3ece0;
+  --panel: #fffcf8;
+  --border: rgba(51, 39, 29, 0.08);
+  --glass: rgba(255, 252, 248, 0.92);
+  --shadow: 0 2px 16px rgba(51, 39, 29, 0.06);
+  --shadow-lg: 0 8px 30px rgba(51, 39, 29, 0.10);
+  --radius: 16px;
+  --radius-lg: 24px;
+  --container: 1100px;
+  --focus: rgba(139, 94, 60, 0.5);
 
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text);
@@ -54,6 +61,6 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus, var(--primary));
   outline-offset: 3px;
 }

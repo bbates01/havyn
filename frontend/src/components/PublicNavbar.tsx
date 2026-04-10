@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 
 function PublicNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  const isHome = location.pathname === '/';
 
   return (
-    <header className="public-navbar">
+    <header className={`public-navbar${isHome ? ' navbar-overlay' : ''}`}>
       <Link to="/" className="navbar-brand" onClick={() => setMenuOpen(false)}>
         <div className="navbar-brand-icon">H</div>
         <span className="navbar-brand-text">Havyn</span>
@@ -23,6 +25,16 @@ function PublicNavbar() {
       <nav className={`navbar-collapse${menuOpen ? ' open' : ''}`}>
         <ul className="navbar-links">
           <li>
+            <NavLink to="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/about" onClick={() => setMenuOpen(false)}>
+              About
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/donor-impact" onClick={() => setMenuOpen(false)}>
               Donor Impact
             </NavLink>
@@ -38,6 +50,13 @@ function PublicNavbar() {
             </NavLink>
           </li>
         </ul>
+        <Link
+          to="/login"
+          className="navbar-donate"
+          onClick={() => setMenuOpen(false)}
+        >
+          Donate
+        </Link>
       </nav>
     </header>
   );
