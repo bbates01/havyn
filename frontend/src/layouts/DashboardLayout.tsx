@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function DashboardLayout() {
@@ -19,13 +19,13 @@ function DashboardLayout() {
         : role === 'staff' ? '/staff'
           : '/dashboard';
 
-  const dashPath = base;
-  const caseloadPath = `${base}/caseload`;
+  const dashPath      = base;
+  const caseloadPath  = `${base}/caseload`;
+  const reportsPath   = `${base}/reports`;
   const createUserPath = `${base}/create-user`;
 
-  const showCreateUser = role === 'admin' || role === 'manager';
-  const isCaseload = pathname.endsWith('/caseload');
-  const isCreateUser = pathname.includes('/create-user');
+  const showReportsTab  = role === 'admin' || role === 'manager';
+  const showCreateUser  = role === 'admin' || role === 'manager';
 
   return (
     <>
@@ -33,29 +33,48 @@ function DashboardLayout() {
         <div className="container-fluid px-3 px-md-4">
           <ul className="nav nav-tabs border-0 pt-2">
             <li className="nav-item">
-              <Link
-                className={`nav-link ${!isCaseload && !isCreateUser ? 'active fw-semibold' : 'text-muted'}`}
+              <NavLink
+                end
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                }
                 to={dashPath}
               >
                 Dashboard
-              </Link>
+              </NavLink>
             </li>
             <li className="nav-item">
-              <Link
-                className={`nav-link ${isCaseload ? 'active fw-semibold' : 'text-muted'}`}
+              <NavLink
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                }
                 to={caseloadPath}
               >
                 Caseload
-              </Link>
+              </NavLink>
             </li>
+            {showReportsTab && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={reportsPath}
+                >
+                  Reports and Analytics
+                </NavLink>
+              </li>
+            )}
             {showCreateUser && (
               <li className="nav-item">
-                <Link
-                  className={`nav-link ${isCreateUser ? 'active fw-semibold' : 'text-muted'}`}
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
                   to={createUserPath}
                 >
-                  Create user
-                </Link>
+                  Create User
+                </NavLink>
               </li>
             )}
           </ul>
