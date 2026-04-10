@@ -31,7 +31,6 @@ function DashboardLayout() {
   const showDonorsTab   = role === 'admin' || role === 'manager';
   const showPartnersTab = role === 'admin' || role === 'manager';
   const showCaseConferencesTab = role === 'manager';
-  const showCreateUser  = role === 'admin' || role === 'manager';
   const showAccountsTab = role === 'admin' || role === 'manager' || role === 'staff';
 
   return (
