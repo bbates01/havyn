@@ -82,6 +82,9 @@ function PublicNavbar() {
         {!loading && (
           <ul className="navbar-links" style={{ marginLeft: 'auto' }}>
             <li>
+              <div id="google_translate_element" aria-label="Translate page" />
+            </li>
+            <li>
               {isAuthenticated ? (
                 <button
                   type="button"
