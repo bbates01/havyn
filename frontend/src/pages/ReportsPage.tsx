@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {
@@ -84,6 +84,15 @@ interface DonationTrendsDto {
   oneTimeDonors: number;
 }
 
+/** Progress model row from GET /api/ml/predictions */
+interface MlPredictionRow {
+  residentId: number;
+  overallScore: number | null;
+  healthProb: number | null;
+  educationProb: number | null;
+  emotionalProb: number | null;
+}
+
 type FetchError = { id: string; label: string; message: string };
 
 function extractItems<T>(raw: unknown): T[] {
@@ -126,6 +135,66 @@ function parseAdmissionLocalMs(s: string | null | undefined): number | null {
 function isActiveCaseStatus(status: string | null | undefined): boolean {
   return status?.trim().toLowerCase() === 'active';
 }
+
+function normalizeMlPredictionRow(raw: Record<string, unknown>): MlPredictionRow {
+  const rid = raw.residentId ?? raw.ResidentId;
+  const os = raw.overallScore ?? raw.OverallScore;
+  const hp = raw.healthProb ?? raw.HealthProb;
+  const ep = raw.educationProb ?? raw.EducationProb;
+  const em = raw.emotionalProb ?? raw.EmotionalProb;
+  const numOrNull = (v: unknown): number | null => {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  return {
+    residentId: Number(rid),
+    overallScore: numOrNull(os),
+    healthProb: numOrNull(hp),
+    educationProb: numOrNull(ep),
+    emotionalProb: numOrNull(em),
+  };
+}
+
+function isActiveSafehouseStatus(status: string | null | undefined): boolean {
+  return status?.trim().toLowerCase() === 'active';
+}
+
+function scorePctTextClass(pct: number): string {
+  if (pct >= 65) return 'text-success';
+  if (pct >= 40) return 'text-warning';
+  return 'text-danger';
+}
+
+function bucketMidpointFill(midpoint: number, success: string, warning: string, danger: string): string {
+  if (midpoint >= 65) return success;
+  if (midpoint >= 40) return warning;
+  return danger;
+}
+
+type OverallDistMetric = 'overall' | 'health' | 'education' | 'emotional';
+
+function pickOverallDistScore(p: MlPredictionRow, m: OverallDistMetric): number | null {
+  switch (m) {
+    case 'overall':
+      return p.overallScore != null && !Number.isNaN(p.overallScore) ? p.overallScore : null;
+    case 'health':
+      return p.healthProb != null && !Number.isNaN(p.healthProb) ? p.healthProb : null;
+    case 'education':
+      return p.educationProb != null && !Number.isNaN(p.educationProb) ? p.educationProb : null;
+    case 'emotional':
+      return p.emotionalProb != null && !Number.isNaN(p.emotionalProb) ? p.emotionalProb : null;
+    default:
+      return null;
+  }
+}
+
+const OVERALL_DIST_METRIC_OPTIONS: { value: OverallDistMetric; label: string }[] = [
+  { value: 'overall', label: 'Overall' },
+  { value: 'health', label: 'Health' },
+  { value: 'education', label: 'Education' },
+  { value: 'emotional', label: 'Emotional' },
+];
 
 function isClosedCaseStatus(status: string | null | undefined): boolean {
   return status?.trim().toLowerCase() === 'closed';
@@ -259,6 +328,15 @@ export default function ReportsPage() {
   const [safehouses, setSafehouses] = useState<Safehouse[] | null>(null);
   const [residents, setResidents] = useState<Resident[] | null>(null);
   const [allocations, setAllocations] = useState<DonationAllocation[] | null>(null);
+  const [mlPredictions, setMlPredictions] = useState<MlPredictionRow[] | null>(null);
+
+  const [selectedOverallScoreSafehouseIds, setSelectedOverallScoreSafehouseIds] = useState<
+    number[]
+  >([]);
+  const [overallScoreShFilterOpen, setOverallScoreShFilterOpen] = useState(false);
+  const [overallDistMetric, setOverallDistMetric] = useState<OverallDistMetric>('overall');
+  const [overallDistMetricFilterOpen, setOverallDistMetricFilterOpen] = useState(false);
+  const overallProgressDistFiltersRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     if (role !== 'admin' && role !== 'manager') return;
@@ -274,6 +352,7 @@ export default function ReportsPage() {
     setSafehouses(null);
     setResidents(null);
     setAllocations(null);
+    setMlPredictions(null);
 
     const resUrl =
       role === 'manager' && safehouseId != null
@@ -291,6 +370,7 @@ export default function ReportsPage() {
       { id: 'dt', label: 'Donation trends', url: '/api/Reports/DonationTrends' },
       { id: 'mm', label: 'ML model meta', url: '/api/ml/model-meta' },
       { id: 'ir', label: 'Incident risk (ML)', url: '/api/ml/incident-risk' },
+      { id: 'mp', label: 'ML predictions', url: '/api/ml/predictions' },
       { id: 'sh', label: 'Safehouses', url: '/api/Safehouses/AllSafehouses?pageSize=100&pageIndex=1' },
       { id: 'rs', label: 'Residents', url: resUrl },
       { id: 'rs-min', label: 'Earliest resident date', url: earliestResUrl },
@@ -335,6 +415,13 @@ export default function ReportsPage() {
             break;
           case 'ir':
             break;
+          case 'mp': {
+            const arr = Array.isArray(data)
+              ? (data as Record<string, unknown>[])
+              : extractItems<Record<string, unknown>>(data);
+            setMlPredictions(arr.map(normalizeMlPredictionRow));
+            break;
+          }
           case 'sh':
             setSafehouses(extractItems<Safehouse>(data));
             break;
@@ -658,6 +745,164 @@ export default function ReportsPage() {
     setSocialTab(preferred);
   }, [socialPlatformKeys, socialTab]);
 
+  useEffect(() => {
+    if (!overallScoreShFilterOpen && !overallDistMetricFilterOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const root = overallProgressDistFiltersRef.current;
+      if (root && !root.contains(e.target as Node)) {
+        setOverallScoreShFilterOpen(false);
+        setOverallDistMetricFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [overallScoreShFilterOpen, overallDistMetricFilterOpen]);
+
+  const bsMlBarColors = useMemo(() => {
+    const r = document.documentElement;
+    const cs = getComputedStyle(r);
+    return {
+      success: cs.getPropertyValue('--bs-success').trim() || '#198754',
+      warning: cs.getPropertyValue('--bs-warning').trim() || '#ffc107',
+      danger: cs.getPropertyValue('--bs-danger').trim() || '#dc3545',
+    };
+  }, []);
+
+  const activeSafehousesForOverallFilter = useMemo(() => {
+    return (safehouses ?? [])
+      .filter((s) => isActiveSafehouseStatus(s.status))
+      .sort((a, b) =>
+        safehouseDisplayLabel(a).localeCompare(safehouseDisplayLabel(b), undefined, {
+          sensitivity: 'base',
+        })
+      );
+  }, [safehouses]);
+
+  const overallProgressScopedScores = useMemo(() => {
+    if (!residents || !mlPredictions) return [];
+    let scoped = residents.filter((r) => isActiveCaseStatus(r.caseStatus));
+    if (role === 'manager' && safehouseId != null) {
+      scoped = scoped.filter((r) => r.safehouseId === safehouseId);
+    } else if (role === 'admin' && selectedOverallScoreSafehouseIds.length > 0) {
+      scoped = scoped.filter((r) =>
+        selectedOverallScoreSafehouseIds.includes(r.safehouseId)
+      );
+    }
+    const idSet = new Set(scoped.map((r) => r.residentId));
+    const out: number[] = [];
+    for (const p of mlPredictions) {
+      if (!idSet.has(p.residentId)) continue;
+      const v = pickOverallDistScore(p, overallDistMetric);
+      if (v == null || Number.isNaN(v)) continue;
+      out.push(v);
+    }
+    return out;
+  }, [
+    residents,
+    mlPredictions,
+    role,
+    safehouseId,
+    selectedOverallScoreSafehouseIds,
+    overallDistMetric,
+  ]);
+
+  const overallProgressHistogramData = useMemo(() => {
+    const scores = overallProgressScopedScores;
+    const edges = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const rows: { range: string; count: number; midpoint: number }[] = [];
+    for (let i = 0; i < 9; i++) {
+      const low = edges[i]!;
+      const high = edges[i + 1]!;
+      let count = 0;
+      for (const os of scores) {
+        const p = os * 100;
+        if (p >= low && p < high) count++;
+      }
+      rows.push({
+        range: `${low}-${high}%`,
+        count,
+        midpoint: (low + high) / 2,
+      });
+    }
+    let cLast = 0;
+    for (const os of scores) {
+      const p = os * 100;
+      if (p >= 90 && p <= 100) cLast++;
+    }
+    rows.push({ range: '90-100%', count: cLast, midpoint: 95 });
+    return rows;
+  }, [overallProgressScopedScores]);
+
+  const overallProgressStats = useMemo(() => {
+    const scores = overallProgressScopedScores;
+    const n = scores.length;
+    if (n === 0) {
+      return {
+        mean: null as number | null,
+        median: null as number | null,
+        n: 0,
+        meanClass: 'text-muted',
+        medianClass: 'text-muted',
+      };
+    }
+    const meanRaw = scores.reduce((a, b) => a + b, 0) / n;
+    const meanPct = Math.round(meanRaw * 1000) / 10;
+    const sorted = [...scores].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const medianRaw =
+      sorted.length % 2 === 1
+        ? sorted[mid]!
+        : (sorted[mid - 1]! + sorted[mid]!) / 2;
+    const medianPct = Math.round(medianRaw * 1000) / 10;
+    return {
+      mean: meanPct,
+      median: medianPct,
+      n,
+      meanClass: scorePctTextClass(meanPct),
+      medianClass: scorePctTextClass(medianPct),
+    };
+  }, [overallProgressScopedScores]);
+
+  const overallScoreFilterButtonLabel = useMemo(() => {
+    if (selectedOverallScoreSafehouseIds.length === 0) return 'All Safehouses';
+    if (selectedOverallScoreSafehouseIds.length === 1) {
+      const sh = safehouseMap.get(selectedOverallScoreSafehouseIds[0]!);
+      const city = sh?.city?.trim();
+      return city || safehouseDisplayLabel(sh) || '1 Selected';
+    }
+    return `${selectedOverallScoreSafehouseIds.length} Selected`;
+  }, [selectedOverallScoreSafehouseIds, safehouseMap]);
+
+  const overallDistMetricButtonLabel = useMemo(() => {
+    switch (overallDistMetric) {
+      case 'overall':
+        return 'Overall';
+      case 'health':
+        return 'Health';
+      case 'education':
+        return 'Education';
+      case 'emotional':
+        return 'Emotional';
+      default:
+        return 'Overall';
+    }
+  }, [overallDistMetric]);
+
+  const overallDistXAxisLabel = useMemo(() => {
+    switch (overallDistMetric) {
+      case 'overall':
+        return 'Overall Score (%)';
+      case 'health':
+        return 'Health (%)';
+      case 'education':
+        return 'Education (%)';
+      case 'emotional':
+        return 'Emotional (%)';
+      default:
+        return 'Score (%)';
+    }
+  }, [overallDistMetric]);
+
   if (authLoading) {
     return (
       <div
@@ -780,6 +1025,209 @@ export default function ReportsPage() {
             >
               Export CSV
             </button>
+          </div>
+
+          <div className="card shadow-sm mb-4">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <h5 className="fw-semibold border-start border-4 border-primary ps-3 mb-0">
+                  Overall Progress Score Distribution
+                </h5>
+                <div
+                  ref={overallProgressDistFiltersRef}
+                  className="d-flex flex-wrap gap-2 align-items-start justify-content-end"
+                >
+                  {role === 'admin' && (
+                    <div className="position-relative flex-shrink-0">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
+                        onClick={() => setOverallScoreShFilterOpen((o) => !o)}
+                        aria-expanded={overallScoreShFilterOpen}
+                      >
+                        <span className="text-truncate" style={{ maxWidth: 180 }}>
+                          {overallScoreFilterButtonLabel}
+                        </span>
+                        <span className="ms-1 small" aria-hidden>
+                          ▾
+                        </span>
+                      </button>
+                      {overallScoreShFilterOpen ? (
+                        <div
+                          className="position-absolute bg-white border rounded shadow-sm mt-1 py-2 px-2 end-0"
+                          style={{ zIndex: 1000, minWidth: 220 }}
+                        >
+                          <label className="d-flex align-items-center gap-2 small mb-2 user-select-none">
+                            <input
+                              type="checkbox"
+                              className="form-check-input mt-0"
+                              checked={selectedOverallScoreSafehouseIds.length === 0}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOverallScoreSafehouseIds([]);
+                                }
+                              }}
+                            />
+                            All Safehouses
+                          </label>
+                          <hr className="my-2" />
+                          {activeSafehousesForOverallFilter.map((sh) => (
+                            <label
+                              key={sh.safehouseId}
+                              className="d-flex align-items-center gap-2 small mb-1 user-select-none"
+                            >
+                              <input
+                                type="checkbox"
+                                className="form-check-input mt-0"
+                                checked={selectedOverallScoreSafehouseIds.includes(
+                                  sh.safehouseId
+                                )}
+                                onChange={() => {
+                                  setSelectedOverallScoreSafehouseIds((prev) =>
+                                    prev.includes(sh.safehouseId)
+                                      ? prev.filter((id) => id !== sh.safehouseId)
+                                      : [...prev, sh.safehouseId].sort((a, b) => a - b)
+                                  );
+                                }}
+                              />
+                              {safehouseDisplayLabel(sh)}
+                            </label>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                  <div className="position-relative flex-shrink-0">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
+                      onClick={() => setOverallDistMetricFilterOpen((o) => !o)}
+                      aria-expanded={overallDistMetricFilterOpen}
+                    >
+                      <span className="text-truncate" style={{ maxWidth: 160 }}>
+                        {overallDistMetricButtonLabel}
+                      </span>
+                      <span className="ms-1 small" aria-hidden>
+                        ▾
+                      </span>
+                    </button>
+                    {overallDistMetricFilterOpen ? (
+                      <div
+                        className="position-absolute bg-white border rounded shadow-sm mt-1 py-2 px-2 end-0"
+                        style={{ zIndex: 1000, minWidth: 200 }}
+                        role="listbox"
+                        aria-label="Score type"
+                      >
+                        {OVERALL_DIST_METRIC_OPTIONS.map((opt) => (
+                          <label
+                            key={opt.value}
+                            className="d-flex align-items-center gap-2 small mb-1 user-select-none"
+                          >
+                            <input
+                              type="radio"
+                              className="form-check-input mt-0"
+                              name="overall-dist-metric"
+                              checked={overallDistMetric === opt.value}
+                              onChange={() => {
+                                setOverallDistMetric(opt.value);
+                                setOverallDistMetricFilterOpen(false);
+                              }}
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+              {overallProgressStats.n === 0 ? (
+                <p className="text-muted small mb-0">
+                  No prediction data available for the current filters.
+                </p>
+              ) : (
+                <div className="row g-3 align-items-center">
+                  <div className="col-md-8 col-12">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart
+                        data={overallProgressHistogramData}
+                        margin={{ top: 8, right: 8, left: 8, bottom: 28 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-25" />
+                        <XAxis
+                          dataKey="range"
+                          tick={{ fontSize: 10 }}
+                          label={{
+                            value: overallDistXAxisLabel,
+                            position: 'insideBottom',
+                            offset: -8,
+                            style: { fontSize: 12 },
+                          }}
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          domain={[0, 'auto']}
+                          label={{
+                            value: 'Residents',
+                            angle: -90,
+                            position: 'insideLeft',
+                            style: { fontSize: 12, textAnchor: 'middle' },
+                          }}
+                        />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            const count = Number(payload[0]?.value ?? 0);
+                            return (
+                              <div className="small bg-white border rounded shadow-sm px-2 py-1">
+                                {count} resident{count === 1 ? '' : 's'} in this range
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                          {overallProgressHistogramData.map((entry) => (
+                            <Cell
+                              key={entry.range}
+                              fill={bucketMidpointFill(
+                                entry.midpoint,
+                                bsMlBarColors.success,
+                                bsMlBarColors.warning,
+                                bsMlBarColors.danger
+                              )}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="col-md-4 col-12">
+                    <div className="d-flex flex-column justify-content-center h-100 gap-3">
+                      <div className="bg-light border-0 rounded p-3">
+                        <div className="small text-muted mb-1">Mean / Average</div>
+                        <div
+                          className={`fs-2 fw-bold ${overallProgressStats.meanClass}`}
+                        >
+                          {overallProgressStats.mean != null
+                            ? `${overallProgressStats.mean.toFixed(1)}%`
+                            : '—'}
+                        </div>
+                      </div>
+                      <div className="bg-light border-0 rounded p-3">
+                        <div className="small text-muted mb-1">Median</div>
+                        <div
+                          className={`fs-2 fw-bold ${overallProgressStats.medianClass}`}
+                        >
+                          {overallProgressStats.median != null
+                            ? `${overallProgressStats.median.toFixed(1)}%`
+                            : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {modelMeta ? (
