@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 
 namespace Mission11_Bates.Controllers
 {
@@ -9,24 +11,32 @@ namespace Mission11_Bates.Controllers
     [Authorize(Policy = "CaseAccess")]
     public class ResidentPredictionsController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly IResidentAccessService _residentAccess;
 
-        public ResidentPredictionsController(HavynDbContext temp) => _context = temp;
+        public ResidentPredictionsController(HavynDbContext context, IResidentAccessService residentAccess)
+        {
+            _context = context;
+            _residentAccess = residentAccess;
+        }
 
         [HttpGet("All")]
-        public IActionResult GetAll(
+        public async Task<IActionResult> GetAll(
             int pageSize = 25,
             int pageIndex = 1,
             string sortBy = "OverallScore",
             string sortOrder = "desc",
             string? healthTag = null)
         {
-            var query = _context.ResidentPredictions.AsQueryable();
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var allowedIds = _residentAccess.ResidentIdsInScope(_context, scope);
+            var query = _context.ResidentPredictions.AsQueryable().Where(p => allowedIds.Contains(p.ResidentId));
 
             if (!string.IsNullOrEmpty(healthTag))
-            {
                 query = query.Where(p => p.HealthTag == healthTag);
-            }
 
             query = sortBy switch
             {
@@ -38,46 +48,60 @@ namespace Mission11_Bates.Controllers
                 _ => sortOrder == "desc" ? query.OrderByDescending(p => p.OverallScore) : query.OrderBy(p => p.OverallScore)
             };
 
-            var totalCount = query.Count();
-
-            var items = query
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             return Ok(new { Items = items, TotalCount = totalCount });
         }
 
         [HttpGet("GetPrediction/{residentId}")]
-        public IActionResult GetPrediction(int residentId)
+        public async Task<IActionResult> GetPrediction(int residentId)
         {
-            var prediction = _context.ResidentPredictions.Find(residentId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
-            if (prediction == null)
-            {
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, residentId))
                 return NotFound(new { message = "Prediction not found for this resident" });
-            }
+
+            var prediction = await _context.ResidentPredictions.FindAsync(residentId);
+            if (prediction == null)
+                return NotFound(new { message = "Prediction not found for this resident" });
 
             return Ok(prediction);
         }
 
         [HttpPost("AddPrediction")]
-        public IActionResult AddPrediction([FromBody] ResidentPrediction newPrediction)
+        public async Task<IActionResult> AddPrediction([FromBody] ResidentPrediction newPrediction)
         {
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, newPrediction.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for this resident." });
+
             _context.ResidentPredictions.Add(newPrediction);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(newPrediction);
         }
 
         [HttpPut("UpdatePrediction/{residentId}")]
-        public IActionResult UpdatePrediction(int residentId, [FromBody] ResidentPrediction updatedPrediction)
+        public async Task<IActionResult> UpdatePrediction(int residentId, [FromBody] ResidentPrediction updatedPrediction)
         {
-            var existing = _context.ResidentPredictions.Find(residentId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
-            if (existing == null)
-            {
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, residentId))
                 return NotFound(new { message = "Prediction not found for this resident" });
-            }
+
+            var existing = await _context.ResidentPredictions.FindAsync(residentId);
+            if (existing == null)
+                return NotFound(new { message = "Prediction not found for this resident" });
 
             existing.HealthProb = updatedPrediction.HealthProb;
             existing.EducationProb = updatedPrediction.EducationProb;
@@ -88,24 +112,21 @@ namespace Mission11_Bates.Controllers
             existing.ModelVersion = updatedPrediction.ModelVersion;
 
             _context.ResidentPredictions.Update(existing);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(existing);
         }
 
         [HttpDelete("DeletePrediction/{residentId}")]
         [Authorize(Policy = "AdminOnly")]
-        public IActionResult DeletePrediction(int residentId)
+        public async Task<IActionResult> DeletePrediction(int residentId)
         {
-            var existing = _context.ResidentPredictions.Find(residentId);
-
+            var existing = await _context.ResidentPredictions.FindAsync(residentId);
             if (existing == null)
-            {
                 return NotFound(new { message = "Prediction not found for this resident" });
-            }
 
             _context.ResidentPredictions.Remove(existing);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }

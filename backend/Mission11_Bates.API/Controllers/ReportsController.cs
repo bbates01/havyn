@@ -1,6 +1,8 @@
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
 
 namespace Mission11_Bates.Controllers
@@ -9,9 +11,14 @@ namespace Mission11_Bates.Controllers
     [ApiController]
     public class ReportsController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ReportsController(HavynDbContext temp) => _context = temp;
+        public ReportsController(HavynDbContext context, UserManager<ApplicationUser> userManager)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
 
         // ── Reports (Admin TAB 5) ──
 
@@ -233,16 +240,33 @@ namespace Mission11_Bates.Controllers
 
         [HttpGet("DonorDashboardSummary")]
         [Authorize(Policy = "DonorAccess")]
-        public IActionResult GetDonorDashboardSummary(int supporterId)
+        public async Task<IActionResult> GetDonorDashboardSummary()
         {
-            var donations = _context.Donations.Where(d => d.SupporterId == supporterId).ToList();
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.SupporterId is not int supporterId)
+                return StatusCode(403, new { message = "Your account is not linked to a supporter profile." });
+
+            var donations = await _context.Donations.Where(d => d.SupporterId == supporterId).ToListAsync();
             var totalLifetimeDonations = donations.Sum(d => (double)(d.Amount ?? d.EstimatedValue));
             var donationCount = donations.Count;
+            var activeRecurringCount = donations.Count(d => d.IsRecurring);
+
+            var donationIds = donations.Select(d => d.DonationId).ToList();
+            var allocationCount = donationIds.Count == 0
+                ? 0
+                : await _context.DonationAllocations.CountAsync(a => donationIds.Contains(a.DonationId));
+
+            var impactSummary = allocationCount > 0
+                ? $"Your gifts are allocated across {allocationCount} program line(s) at our safehouses — thank you."
+                : "Thank you — your support helps girls in our safe homes.";
 
             return Ok(new
             {
                 TotalLifetimeDonations = Math.Round(totalLifetimeDonations, 2),
-                DonationCount = donationCount
+                DonationCount = donationCount,
+                ActiveRecurringCount = activeRecurringCount,
+                ProgramAllocationsCount = allocationCount,
+                ImpactSummary = impactSummary
             });
         }
 

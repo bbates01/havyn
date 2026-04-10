@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mission11_Bates.Data
 {
@@ -53,6 +55,18 @@ namespace Mission11_Bates.Data
                 .WithMany()
                 .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // DB table (CSV baseline) has no SERIAL/identity on DonationId; inserts must supply PK.
+            modelBuilder.Entity<Donation>()
+                .Property(d => d.DonationId)
+                .ValueGeneratedNever();
+        }
+
+        public async Task<int> NextDonationIdAsync(CancellationToken cancellationToken = default)
+        {
+            if (!await Donations.AnyAsync(cancellationToken))
+                return 1;
+            return await Donations.MaxAsync(d => d.DonationId, cancellationToken) + 1;
         }
     }
 }

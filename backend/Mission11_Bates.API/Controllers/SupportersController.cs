@@ -1,17 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
 
 namespace Mission11_Bates.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "InternalStaff")]
+    [Authorize(Policy = "DonorRecordManagement")]
     public class SupportersController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public SupportersController(HavynDbContext temp) => _context = temp;
+        public SupportersController(HavynDbContext context, UserManager<ApplicationUser> userManager)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
 
         [HttpGet("AllSupporters")]
         public IActionResult GetAllSupporters(
@@ -124,6 +131,35 @@ namespace Mission11_Bates.Controllers
             _context.SaveChanges();
 
             return Ok(existing);
+        }
+
+        [HttpDelete("DeleteSupporter/{supporterId}")]
+        public async Task<IActionResult> DeleteSupporter(int supporterId)
+        {
+            var existing = await _context.Supporters.FindAsync(supporterId);
+            if (existing == null)
+                return NotFound(new { message = "Supporter not found" });
+
+            if (await _context.Donations.AnyAsync(d => d.SupporterId == supporterId))
+                return BadRequest(new { message = "Cannot delete a supporter with donation history." });
+
+            if (!string.IsNullOrEmpty(existing.UserId))
+            {
+                var user = await _userManager.FindByIdAsync(existing.UserId);
+                if (user != null)
+                {
+                    var result = await _userManager.DeleteAsync(user);
+                    if (!result.Succeeded)
+                    {
+                        var err = string.Join(" ", result.Errors.Select(e => e.Description));
+                        return BadRequest(new { message = string.IsNullOrEmpty(err) ? "Could not delete linked login account." : err });
+                    }
+                }
+            }
+
+            _context.Supporters.Remove(existing);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

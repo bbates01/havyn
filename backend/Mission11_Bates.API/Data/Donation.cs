@@ -14,6 +14,8 @@ namespace Mission11_Bates.Data
         public DateOnly DonationDate { get; set; }
         [Required]
         public bool IsRecurring { get; set; }
+        /// <summary>Optional pledge interval when <see cref="IsRecurring"/> is true (e.g. Monthly). Not used for automated billing in-app.</summary>
+        public string? RecurringFrequency { get; set; }
         public string? CampaignName { get; set; }
         [Required]
         public string ChannelSource { get; set; }

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 
 namespace Mission11_Bates.Controllers
 {
@@ -9,12 +11,17 @@ namespace Mission11_Bates.Controllers
     [Authorize(Policy = "CaseAccess")]
     public class InterventionPlansController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly IResidentAccessService _residentAccess;
 
-        public InterventionPlansController(HavynDbContext temp) => _context = temp;
+        public InterventionPlansController(HavynDbContext context, IResidentAccessService residentAccess)
+        {
+            _context = context;
+            _residentAccess = residentAccess;
+        }
 
         [HttpGet("AllPlans")]
-        public IActionResult GetAllPlans(
+        public async Task<IActionResult> GetAllPlans(
             int pageSize = 25,
             int pageIndex = 1,
             string sortBy = "CreatedAt",
@@ -24,12 +31,15 @@ namespace Mission11_Bates.Controllers
             [FromQuery] List<string>? planCategories = null,
             [FromQuery] List<string>? statuses = null)
         {
-            var query = _context.InterventionPlans.AsQueryable();
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var allowedIds = _residentAccess.ResidentIdsInScope(_context, scope);
+            var query = _context.InterventionPlans.AsQueryable().Where(ip => allowedIds.Contains(ip.ResidentId));
 
             if (residentId.HasValue)
-            {
                 query = query.Where(ip => ip.ResidentId == residentId.Value);
-            }
 
             if (!string.IsNullOrEmpty(caseConferenceDate))
             {
@@ -38,14 +48,10 @@ namespace Mission11_Bates.Controllers
             }
 
             if (planCategories != null && planCategories.Any())
-            {
                 query = query.Where(ip => planCategories.Contains(ip.PlanCategory));
-            }
 
             if (statuses != null && statuses.Any())
-            {
                 query = query.Where(ip => statuses.Contains(ip.Status));
-            }
 
             query = sortBy switch
             {
@@ -56,48 +62,68 @@ namespace Mission11_Bates.Controllers
                 _ => sortOrder == "desc" ? query.OrderByDescending(ip => ip.CreatedAt) : query.OrderBy(ip => ip.CreatedAt)
             };
 
-            var totalCount = query.Count();
-
-            var items = query
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             return Ok(new { Items = items, TotalCount = totalCount });
         }
 
         [HttpGet("GetPlan/{planId}")]
-        public IActionResult GetPlan(int planId)
+        public async Task<IActionResult> GetPlan(int planId)
         {
-            var plan = _context.InterventionPlans.Find(planId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var plan = await _context.InterventionPlans.FindAsync(planId);
             if (plan == null)
-            {
                 return NotFound(new { message = "Intervention plan not found" });
-            }
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, plan.ResidentId))
+                return NotFound(new { message = "Intervention plan not found" });
 
             return Ok(plan);
         }
 
         [HttpPost("AddPlan")]
-        public IActionResult AddPlan([FromBody] InterventionPlan newPlan)
+        public async Task<IActionResult> AddPlan([FromBody] InterventionPlan newPlan)
         {
             // Assign PlanId explicitly (DB column is NOT auto-generated).
             newPlan.PlanId = (_context.InterventionPlans.Max(p => (int?)p.PlanId) ?? 0) + 1;
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, newPlan.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for this resident." });
+
             _context.InterventionPlans.Add(newPlan);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(newPlan);
         }
 
         [HttpPut("UpdatePlan/{planId}")]
-        public IActionResult UpdatePlan(int planId, [FromBody] InterventionPlan updatedPlan)
+        public async Task<IActionResult> UpdatePlan(int planId, [FromBody] InterventionPlan updatedPlan)
         {
-            var existing = _context.InterventionPlans.Find(planId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var existing = await _context.InterventionPlans.FindAsync(planId);
             if (existing == null)
-            {
                 return NotFound(new { message = "Intervention plan not found" });
-            }
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, existing.ResidentId))
+                return NotFound(new { message = "Intervention plan not found" });
+
+            if (updatedPlan.ResidentId != existing.ResidentId && scope.Kind != ResidentScopeKind.Unrestricted)
+                return BadRequest(new { message = "Cannot move a plan to another resident." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, updatedPlan.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for this resident." });
 
             existing.ResidentId = updatedPlan.ResidentId;
             existing.PlanCategory = updatedPlan.PlanCategory;
@@ -110,7 +136,7 @@ namespace Mission11_Bates.Controllers
             existing.UpdatedAt = updatedPlan.UpdatedAt;
 
             _context.InterventionPlans.Update(existing);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(existing);
         }

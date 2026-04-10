@@ -12,6 +12,63 @@
   overflow-x: clip;
 }
 
+.login-stack {
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-donate-banner {
+  position: relative;
+  margin-bottom: 0.85rem;
+  padding: 0.8rem 2.2rem 0.8rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(20, 111, 133, 0.2);
+  background: rgba(224, 242, 254, 0.78);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: #1e293b;
+}
+
+.login-donate-banner-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: 0 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 0.1rem;
+}
+
+.login-donate-banner p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.login-donate-banner-close {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem;
+}
+
+.login-donate-banner-close:hover {
+  opacity: 0.72;
+}
+
 .login-card--signup {
   max-width: 480px;
 }
@@ -76,6 +133,41 @@
 .login-field input::placeholder {
   color: var(--muted);
   opacity: 0.85;
+}
+
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap input {
+  padding-right: 2.7rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+}
+
+.password-toggle:hover {
+  opacity: 1;
+}
+
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .login-field select {
@@ -185,6 +277,10 @@
   }
 
   .login-card--signup {
+    max-width: none;
+  }
+
+  .login-stack {
     max-width: none;
   }
 

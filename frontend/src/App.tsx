@@ -1,11 +1,12 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import PublicLayout from './layouts/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignUpPage = lazy(() => import('./pages/SignUpPage'));
@@ -22,6 +23,7 @@ const PartnersPage = lazy(() => import('./pages/PartnersPage'));
 const CaseConferencesPage = lazy(() => import('./pages/CaseConferencesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
+const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 
 function RouteFallback() {
   return (
@@ -39,11 +41,13 @@ function App() {
           <Routes>
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/donor" element={<DonorHomePage />} />
-              <Route path="/donor-impact" element={<DonorImpactPage />} />
+              <Route path="/donor" element={<DonorImpactPage />} />
+              <Route path="/donor/dashboard" element={<DonorHomePage />} />
+              <Route path="/donor-impact" element={<Navigate to="/donor" replace />} />
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
@@ -59,10 +63,16 @@ function App() {
                 <Route path="/manager/partners" element={<PartnersPage />} />
                 <Route path="/manager/case-conferences" element={<CaseConferencesPage />} />
                 <Route path="/manager/reports" element={<ReportsPage />} />
-                <Route path="/admin/create-user" element={<StaffCreateUserPage />} />
-                <Route path="/manager/create-user" element={<StaffCreateUserPage />} />
+                <Route path="/admin/accounts" element={<AccountsPage />} />
+                <Route path="/admin/accounts/create" element={<StaffCreateUserPage />} />
+                <Route path="/admin/create-user" element={<Navigate to="/admin/accounts/create" replace />} />
+                <Route path="/manager/caseload" element={<CaseloadPage />} />
+                <Route path="/manager/accounts" element={<AccountsPage />} />
+                <Route path="/manager/accounts/create" element={<StaffCreateUserPage />} />
+                <Route path="/manager/create-user" element={<Navigate to="/manager/accounts/create" replace />} />
                 <Route path="/staff" element={<DashboardPage />} />
                 <Route path="/staff/caseload" element={<CaseloadPage />} />
+                <Route path="/staff/accounts" element={<AccountsPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/dashboard/caseload" element={<CaseloadPage />} />
               </Route>

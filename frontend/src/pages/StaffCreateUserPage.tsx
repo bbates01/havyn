@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { apiFetch } from '../api/apiHelper';
 import { createStaffUser } from '../api/authApi';
@@ -32,7 +32,7 @@ function StaffCreateUserPage() {
   const onManagerPath = path.startsWith('/manager/');
 
   useEffect(() => {
-    document.title = 'Create user | Havyn';
+    document.title = 'Create account | Havyn';
   }, []);
 
   const loadSafehouses = useCallback(async () => {
@@ -74,11 +74,11 @@ function StaffCreateUserPage() {
   }
 
   if (isAdmin && onManagerPath) {
-    return <Navigate to="/admin/create-user" replace />;
+    return <Navigate to="/admin/accounts/create" replace />;
   }
 
   if (!isAdmin && isManager && onAdminPath) {
-    return <Navigate to="/manager/create-user" replace />;
+    return <Navigate to="/manager/accounts/create" replace />;
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -164,8 +164,15 @@ function StaffCreateUserPage() {
     ? ['Admin', 'Manager', 'SocialWorker', 'Donor']
     : ['SocialWorker', 'Donor'];
 
+  const accountsHref = isAdmin ? '/admin/accounts' : '/manager/accounts';
+
   return (
     <div className="container py-4 px-3 px-md-4">
+      <p className="mb-2">
+        <Link to={accountsHref} className="small text-decoration-none">
+          ← Accounts
+        </Link>
+      </p>
       <h1 className="h3 fw-bold mb-1">Create user account</h1>
       <p className="text-muted mb-4">
         Create accounts for staff or donors. Passwords must meet system rules (12+

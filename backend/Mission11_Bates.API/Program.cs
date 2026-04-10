@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -15,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.NumberHandling =
         JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });
@@ -84,6 +86,7 @@ if (string.IsNullOrWhiteSpace(defaultConnectionString) ||
 }
 
 builder.Services.AddDbContext<HavynDbContext>(options => options.UseNpgsql(defaultConnectionString));
+builder.Services.AddScoped<IResidentAccessService, ResidentAccessService>();
 
 // Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -138,6 +141,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CaseAccess", p => p.RequireRole("Admin", "Manager", "SocialWorker"));
     options.AddPolicy("DonorAccess", p => p.RequireRole("Donor"));
     options.AddPolicy("InternalStaff", p => p.RequireRole("Admin", "Manager", "SocialWorker"));
+    options.AddPolicy("DonorRecordManagement", p => p.RequireRole("Admin", "Manager"));
+    options.AddPolicy("StaffAccountManagement", p => p.RequireRole("Admin", "Manager"));
 });
 
 // CORS
@@ -169,10 +174,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed roles and users on startup
+// Seed roles and users on startup; ensure additive columns exist when EF migration history is behind deployment.
 using (var scope = app.Services.CreateScope())
 {
-    await SeedData.Initialize(scope.ServiceProvider);
+    var sp = scope.ServiceProvider;
+    var db = sp.GetRequiredService<HavynDbContext>();
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'Donations' AND column_name = 'RecurringFrequency') THEN
+                ALTER TABLE "Donations" ADD "RecurringFrequency" text;
+            END IF;
+        END $$;
+        """);
+    await SeedData.Initialize(sp);
 }
 
 app.Run();
