@@ -4,6 +4,7 @@ export interface Donation {
   donationType: string,
   donationDate: string,
   isRecurring: boolean,
+  recurringFrequency?: string | null,
   campaignName?: string | null,
   channelSource: string,
   currencyCode?: string | null,

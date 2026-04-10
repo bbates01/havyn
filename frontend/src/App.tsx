@@ -4,8 +4,10 @@ import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import PublicLayout from './layouts/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignUpPage = lazy(() => import('./pages/SignUpPage'));
@@ -17,10 +19,14 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const DonorsPage = lazy(() => import('./pages/DonorsPage'));
+const PartnersPage = lazy(() => import('./pages/PartnersPage'));
+const CaseConferencesPage = lazy(() => import('./pages/CaseConferencesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
 const ResidentIntakePage = lazy(() => import('./pages/ResidentIntakePage'));
 const FormsPage = lazy(() => import('./pages/FormsPage'));
+const AccountsPage = lazy(() => import('./pages/AccountsPage'));
 
 function RouteFallback() {
   return (
@@ -33,16 +39,19 @@ function RouteFallback() {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route element={<PublicLayout />}>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/donor" element={<DonorHomePage />} />
-              <Route path="/donor-impact" element={<DonorImpactPage />} />
+              <Route path="/donor" element={<DonorImpactPage />} />
+              <Route path="/donor/dashboard" element={<DonorHomePage />} />
+              <Route path="/donor-impact" element={<Navigate to="/donor" replace />} />
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
@@ -64,10 +73,18 @@ function App() {
                 <Route path="/admin/forms/health-wellbeing" element={<Navigate to="/admin/forms" replace />} />
                 <Route path="/admin/forms/education-record/:id/edit" element={<FormsPage />} />
                 <Route path="/admin/forms/education-record" element={<Navigate to="/admin/forms" replace />} />
+                <Route path="/admin/donors" element={<DonorsPage />} />
                 <Route path="/admin/reports" element={<ReportsPage />} />
+                <Route path="/admin/partners" element={<PartnersPage />} />
                 <Route path="/manager" element={<DashboardPage />} />
+                <Route path="/manager/caseload" element={<CaseloadPage />} />
+                <Route path="/manager/donors" element={<DonorsPage />} />
+                <Route path="/manager/partners" element={<PartnersPage />} />
+                <Route path="/manager/case-conferences" element={<CaseConferencesPage />} />
                 <Route path="/manager/reports" element={<ReportsPage />} />
-                <Route path="/admin/create-user" element={<StaffCreateUserPage />} />
+                <Route path="/admin/accounts" element={<AccountsPage />} />
+                <Route path="/admin/accounts/create" element={<StaffCreateUserPage />} />
+                <Route path="/admin/create-user" element={<Navigate to="/admin/accounts/create" replace />} />
                 <Route path="/manager/caseload" element={<CaseloadPage />} />
                 <Route path="/manager/residents/new" element={<ResidentIntakePage />} />
                 <Route path="/manager/residents/:id/edit" element={<ResidentIntakePage />} />
@@ -86,7 +103,6 @@ function App() {
                 <Route path="/manager/forms/education-record" element={<Navigate to="/manager/forms" replace />} />
                 <Route path="/manager/create-user" element={<StaffCreateUserPage />} />
                 <Route path="/staff" element={<DashboardPage />} />
-                <Route path="/staff/caseload" element={<CaseloadPage />} />
                 <Route path="/staff/forms" element={<FormsPage />} />
                 <Route path="/staff/forms/process-recording/:id/edit" element={<FormsPage />} />
                 <Route path="/staff/forms/process-recording" element={<Navigate to="/staff/forms" replace />} />
@@ -100,6 +116,12 @@ function App() {
                 <Route path="/staff/forms/health-wellbeing" element={<Navigate to="/staff/forms" replace />} />
                 <Route path="/staff/forms/education-record/:id/edit" element={<FormsPage />} />
                 <Route path="/staff/forms/education-record" element={<Navigate to="/staff/forms" replace />} />
+                <Route path="/manager/accounts" element={<AccountsPage />} />
+                <Route path="/manager/accounts/create" element={<StaffCreateUserPage />} />
+                <Route path="/manager/create-user" element={<Navigate to="/manager/accounts/create" replace />} />
+                <Route path="/staff" element={<DashboardPage />} />
+                <Route path="/staff/caseload" element={<CaseloadPage />} />
+                <Route path="/staff/accounts" element={<AccountsPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/dashboard/caseload" element={<CaseloadPage />} />
                 <Route path="/dashboard/forms" element={<FormsPage />} />

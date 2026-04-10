@@ -10,7 +10,7 @@ function CtaSection() {
       <div className="cta-content">
         <span className="cta-eyebrow">Make a Difference Today</span>
         <h2>Every Gift Changes a Life</h2>
-        <Link to="/login" className="hero-btn-primary">
+        <Link to="/login?from=donate" className="hero-btn-primary">
           Become a Donor
         </Link>
       </div>

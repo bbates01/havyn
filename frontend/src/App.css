@@ -117,6 +117,45 @@
   color: var(--primary);
 }
 
+/* Match nav links: native <button> would otherwise show default border / “box” */
+.navbar-logout-btn {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  margin: 0;
+  padding: 0 1.15rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.navbar-logout-btn:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.public-navbar.navbar-overlay .navbar-logout-btn {
+  color: #fff;
+}
+
+.public-navbar.navbar-overlay .navbar-logout-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.navbar-logout-btn:focus {
+  box-shadow: none;
+}
+
 .navbar-donate {
   display: inline-flex;
   align-items: center;
@@ -217,6 +256,12 @@
     width: 100%;
     padding: 0.75rem 1rem;
     border-radius: 0;
+  }
+
+  .navbar-logout-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
   }
 
   .navbar-login {
@@ -501,5 +546,37 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.card.dashboard-filter-sticky {
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+.dashboard-theme .bg-success {
+  background-color: #5c8a6b !important;
+}
+
+.dashboard-theme .text-success {
+  color: #5c8a6b !important;
+}
+
+.dashboard-theme .bg-warning {
+  background-color: #e9c46a !important;
+}
+
+.dashboard-theme .text-warning {
+  color: #e9c46a !important;
+}
+
+.dashboard-theme .bg-danger {
+  background-color: #c65b5b !important;
+}
+
+.dashboard-theme .text-danger {
+  color: #c65b5b !important;
 }
 

@@ -100,6 +100,10 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddDonation")]
         public IActionResult AddDonation([FromBody] Donation newDonation)
         {
+            if (newDonation.DonationId == 0)
+                newDonation.DonationId = _context.Donations.Any()
+                    ? _context.Donations.Max(d => d.DonationId) + 1
+                    : 1;
             _context.Donations.Add(newDonation);
             _context.SaveChanges();
             return Ok(newDonation);
@@ -119,6 +123,7 @@ namespace Mission11_Bates.Controllers
             existing.DonationType = updatedDonation.DonationType;
             existing.DonationDate = updatedDonation.DonationDate;
             existing.IsRecurring = updatedDonation.IsRecurring;
+            existing.RecurringFrequency = updatedDonation.RecurringFrequency;
             existing.CampaignName = updatedDonation.CampaignName;
             existing.ChannelSource = updatedDonation.ChannelSource;
             existing.CurrencyCode = updatedDonation.CurrencyCode;

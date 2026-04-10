@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { login, verifyMfa, verifyRecoveryCode } from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
@@ -8,12 +8,17 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { refreshAuth } = useAuth();
 
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const fromDonate = searchParams.get('from') === 'donate';
+  const showDonateBanner = fromDonate && !bannerDismissed;
 
   useEffect(() => {
     document.title = 'Log In | Havyn';
@@ -28,7 +33,7 @@ function LoginPage() {
     if (user.roles.includes('Admin')) navigate('/admin');
     else if (user.roles.includes('Manager')) navigate('/manager');
     else if (user.roles.includes('SocialWorker')) navigate('/staff');
-    else if (user.roles.includes('Donor')) navigate('/donor');
+    else if (user.roles.includes('Donor')) navigate('/donor/dashboard');
     else navigate('/');
   };
 
@@ -84,7 +89,26 @@ function LoginPage() {
   if (mfaRequired) {
     return (
       <div className="login-page">
-        <div className="login-card">
+        <div className="login-stack">
+          {showDonateBanner && (
+            <div className="login-donate-banner" role="status" aria-live="polite">
+              <span className="login-donate-banner-icon" aria-hidden="true">ℹ</span>
+              <p>
+                To complete your donation, please log in to your Havyn account
+                or create a free account below. Donor accounts allow us to send
+                your tax receipt and track your giving history.
+              </p>
+              <button
+                type="button"
+                className="login-donate-banner-close"
+                onClick={() => setBannerDismissed(true)}
+                aria-label="Dismiss donation info"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          <div className="login-card">
           <h1>Two-Factor Authentication</h1>
           <p className="login-lede">
             {useRecoveryCode
@@ -146,13 +170,33 @@ function LoginPage() {
             </button>
           </p>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="login-page">
-      <div className="login-card">
+      <div className="login-stack">
+        {showDonateBanner && (
+          <div className="login-donate-banner" role="status" aria-live="polite">
+            <span className="login-donate-banner-icon" aria-hidden="true">ℹ</span>
+            <p>
+              To complete your donation, please log in to your Havyn account or
+              create a free account below. Donor accounts allow us to send your
+              tax receipt and track your giving history.
+            </p>
+            <button
+              type="button"
+              className="login-donate-banner-close"
+              onClick={() => setBannerDismissed(true)}
+              aria-label="Dismiss donation info"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <div className="login-card">
         <h1>Log in</h1>
         <p className="login-lede">
           Access your Havyn account to manage donations and preferences.
@@ -172,14 +216,36 @@ function LoginPage() {
           </div>
           <div className="login-field">
             <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              placeholder="Enter your password"
-            />
+            <div className="password-input-wrap">
+              <input
+                id="login-password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                required
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M10.6 10.7a2 2 0 002.7 2.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M9.9 5.2A10.7 10.7 0 0112 5c5.3 0 9.4 4.2 10 7-.2.9-.8 2-1.8 3.1M6.1 6.2C4 7.6 2.5 9.5 2 12c.8 3.3 4.8 7 10 7 1.8 0 3.5-.4 5-1.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M2 12c.8-3.3 4.8-7 10-7s9.2 3.7 10 7c-.8 3.3-4.8 7-10 7S2.8 15.3 2 12z" stroke="currentColor" strokeWidth="2" />
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <label className="login-remember">
@@ -217,6 +283,7 @@ function LoginPage() {
           {' · '}
           Learn more on our <Link to="/">home page</Link>.
         </p>
+      </div>
       </div>
     </div>
   );

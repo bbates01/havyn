@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 
 namespace Mission11_Bates.Controllers
 {
@@ -13,17 +14,23 @@ namespace Mission11_Bates.Controllers
     {
         private readonly HavynDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IResidentAccessService _residentAccess;
 
-        public HomeVisitationsController(HavynDbContext context, UserManager<ApplicationUser> userManager)
+        public HomeVisitationsController(
+            HavynDbContext context,
+            UserManager<ApplicationUser> userManager,
+            IResidentAccessService residentAccess)
         {
             _context = context;
             _userManager = userManager;
+            _residentAccess = residentAccess;
         }
 
         private static bool IsSocialWorkerOnly(IList<string> roles) =>
             roles.Contains("SocialWorker") && !roles.Contains("Admin") && !roles.Contains("Manager");
 
-        private async Task<ApplicationUser?> GetCallerAsync() => await _userManager.GetUserAsync(User);
+        private async Task<ApplicationUser?> GetCallerAsync() =>
+            await _userManager.GetUserAsync(User);
 
         private async Task<IList<string>> GetCallerRolesAsync()
         {
@@ -50,8 +57,10 @@ namespace Mission11_Bates.Controllers
             {
                 if (caller.SafehouseId == null)
                     return StatusCode(403, new { message = "Your account is not assigned to a safehouse." });
+
                 if (resident.SafehouseId != caller.SafehouseId.Value)
                     return StatusCode(403, new { message = "You do not have access to this resident." });
+
                 return null;
             }
 
@@ -59,8 +68,10 @@ namespace Mission11_Bates.Controllers
             {
                 if (string.IsNullOrEmpty(caller.SocialWorkerCode))
                     return StatusCode(403, new { message = "Your account has no social worker code." });
+
                 if (resident.AssignedSocialWorker != caller.SocialWorkerCode)
                     return StatusCode(403, new { message = "You can only file visitations for residents assigned to you." });
+
                 return null;
             }
 
@@ -81,7 +92,14 @@ namespace Mission11_Bates.Controllers
 
             var roles = await _userManager.GetRolesAsync(caller);
 
-            var query = _context.HomeVisitations.AsQueryable();
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var allowedIds = _residentAccess.ResidentIdsInScope(_context, scope);
+            var query = _context.HomeVisitations
+                .AsQueryable()
+                .Where(hv => allowedIds.Contains(hv.ResidentId));
 
             if (!roles.Contains("Admin"))
             {
@@ -89,6 +107,7 @@ namespace Mission11_Bates.Controllers
                 {
                     if (caller.SafehouseId == null)
                         return StatusCode(403, new { message = "Your account is not assigned to a safehouse." });
+
                     var shId = caller.SafehouseId.Value;
                     query = query.Where(hv =>
                         _context.Residents.Any(r =>
@@ -99,6 +118,7 @@ namespace Mission11_Bates.Controllers
                     var code = caller.SocialWorkerCode;
                     if (string.IsNullOrEmpty(code))
                         return Ok(new { Items = Array.Empty<HomeVisitation>(), TotalCount = 0 });
+
                     query = query.Where(hv =>
                         _context.Residents.Any(r =>
                             r.ResidentId == hv.ResidentId && r.AssignedSocialWorker == code));
@@ -106,20 +126,24 @@ namespace Mission11_Bates.Controllers
             }
 
             if (residentId.HasValue)
-            {
                 query = query.Where(hv => hv.ResidentId == residentId.Value);
-            }
 
             if (!string.IsNullOrEmpty(socialWorker))
-            {
                 query = query.Where(hv => hv.SocialWorker == socialWorker);
-            }
 
             query = sortBy switch
             {
-                "VisitDate" => sortOrder == "desc" ? query.OrderByDescending(hv => hv.VisitDate) : query.OrderBy(hv => hv.VisitDate),
-                "VisitType" => sortOrder == "desc" ? query.OrderByDescending(hv => hv.VisitType) : query.OrderBy(hv => hv.VisitType),
-                _ => sortOrder == "desc" ? query.OrderByDescending(hv => hv.VisitDate) : query.OrderBy(hv => hv.VisitDate)
+                "VisitDate" => sortOrder == "desc"
+                    ? query.OrderByDescending(hv => hv.VisitDate)
+                    : query.OrderBy(hv => hv.VisitDate),
+
+                "VisitType" => sortOrder == "desc"
+                    ? query.OrderByDescending(hv => hv.VisitType)
+                    : query.OrderBy(hv => hv.VisitType),
+
+                _ => sortOrder == "desc"
+                    ? query.OrderByDescending(hv => hv.VisitDate)
+                    : query.OrderBy(hv => hv.VisitDate)
             };
 
             var totalCount = await query.CountAsync();
@@ -140,12 +164,16 @@ namespace Mission11_Bates.Controllers
 
             var roles = await _userManager.GetRolesAsync(caller);
 
-            var visitation = await _context.HomeVisitations.FindAsync(visitationId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var visitation = await _context.HomeVisitations.FindAsync(visitationId);
             if (visitation == null)
-            {
                 return NotFound(new { message = "Home visitation not found" });
-            }
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, visitation.ResidentId))
+                return NotFound(new { message = "Home visitation not found" });
 
             var resident = await _context.Residents.FindAsync(visitation.ResidentId);
             var auth = TryAuthorizeResidentForHomeVisitation(caller, roles, resident);
@@ -166,13 +194,22 @@ namespace Mission11_Bates.Controllers
             var auth = TryAuthorizeResidentForHomeVisitation(caller, roles, resident);
             if (auth != null) return auth;
 
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, newVisitation.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for this resident." });
+
             _context.HomeVisitations.Add(newVisitation);
             await _context.SaveChangesAsync();
 
             if (appointmentId.HasValue)
             {
                 var appointment = await _context.Appointments.FindAsync(appointmentId.Value);
-                if (appointment != null && appointment.Status == "Scheduled")
+                if (appointment != null &&
+                    appointment.Status == "Scheduled" &&
+                    await _residentAccess.CanAccessResidentAsync(_context, scope, appointment.ResidentId))
                 {
                     appointment.Status = "Completed";
                     _context.Appointments.Update(appointment);

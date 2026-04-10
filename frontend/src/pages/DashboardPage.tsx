@@ -191,10 +191,10 @@ function getScopeParams(role: string | null, safehouseId: number | null): string
 }
 
 const RISK_COLORS: Record<string, string> = {
-  Low: '#198754',
-  Medium: '#ffc107',
-  High: '#fd7e14',
-  Critical: '#dc3545',
+  Low: '#5C8A6B',
+  Medium: '#E9C46A',
+  High: '#C47A5A',
+  Critical: '#C65B5B',
 };
 
 const RISK_ORDER = ['Low', 'Medium', 'High', 'Critical'];
@@ -370,20 +370,18 @@ function useDashboardData(
 function StatCard({
   label,
   value,
-  color,
   warning,
   onClick,
 }: {
   label: string;
   value: string | number;
-  color?: string;
   warning?: boolean;
   onClick?: () => void;
 }) {
   return (
     <div className="col-6 col-md-4 col-xl-2 mb-3">
       <div
-        className={`card h-100 border-0 shadow-sm ${warning ? 'border-start border-danger border-4' : ''}`}
+        className="card h-100 border-0 shadow-sm"
         style={{
           ...(warning ? { backgroundColor: '#fff5f5' } : {}),
           ...(onClick ? { cursor: 'pointer' } : {}),
@@ -391,7 +389,12 @@ function StatCard({
         onClick={onClick}
       >
         <div className="card-body text-center py-3">
-          <div className={`fs-3 fw-bold text-nowrap ${color ?? ''}`}>{value}</div>
+          <div
+            className="fs-3 fw-bold text-nowrap"
+            style={{ color: '#000' }}
+          >
+            {value}
+          </div>
           <small className="text-muted" style={{ whiteSpace: 'pre-line' }}>{label}</small>
         </div>
       </div>
@@ -434,7 +437,6 @@ function SeverityBadge({ severity }: { severity: string }) {
 type ProgressBand = 'improving' | 'uncertain' | 'attention' | 'insufficient';
 
 function DistBadge({
-  emoji,
   label,
   count,
   total,
@@ -442,7 +444,6 @@ function DistBadge({
   active,
   onClick,
 }: {
-  emoji: string;
   label: string;
   count: number;
   total: number;
@@ -451,6 +452,15 @@ function DistBadge({
   onClick: () => void;
 }) {
   const pctVal = total > 0 ? Math.round((count / total) * 100) : 0;
+  const tintByColor: Record<string, string> = {
+    success: '92, 138, 107',
+    warning: '233, 196, 106',
+    danger: '198, 91, 91',
+    secondary: '129, 140, 151',
+  };
+  const tintRgb = tintByColor[color] ?? '129, 140, 151';
+  const bgAlpha = active ? 0.26 : 0.14;
+  const borderAlpha = active ? 0.55 : 0.38;
   return (
     <div
       role="button"
@@ -459,10 +469,14 @@ function DistBadge({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onClick();
       }}
-      className={`d-flex align-items-center gap-2 border rounded px-3 py-2 bg-${color} ${active ? 'bg-opacity-25 border-2' : 'bg-opacity-10'}`}
-      style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+      className={`d-flex align-items-center gap-2 border rounded px-3 py-2 ${active ? 'border-2' : ''}`}
+      style={{
+        cursor: 'pointer',
+        transition: 'all 0.15s',
+        backgroundColor: `rgba(${tintRgb}, ${bgAlpha})`,
+        borderColor: `rgba(${tintRgb}, ${borderAlpha})`,
+      }}
     >
-      <span>{emoji}</span>
       <div>
         <div className="fw-bold">
           {count}{' '}
@@ -786,7 +800,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container-fluid py-4 px-3 px-md-4">
+    <div className="container-fluid py-4 px-3 px-md-4 dashboard-theme">
       {/* Error banner */}
       {errors.length > 0 && (
         <div className="alert alert-warning alert-dismissible mb-3">
@@ -802,7 +816,7 @@ export default function DashboardPage() {
       {/* ── Role Context Header ────────────────────────────────────────── */}
       <div className="mb-4">
         <h4 className="mb-1 fw-bold">
-          Welcome back, {user?.userName ?? user?.email ?? 'User'}
+          Welcome back, {user?.displayName ?? user?.userName ?? user?.email ?? 'User'}!
         </h4>
         <p className="text-muted mb-0">
           {role === 'admin' &&
@@ -827,18 +841,10 @@ export default function DashboardPage() {
         <StatCard
           label={role === 'staff' ? 'Assigned Residents' : 'Active Residents'}
           value={derived.activeResidents.length}
-          color="text-primary"
         />
         <StatCard
           label="Avg Progress Score"
           value={`${derived.avgProgress}%`}
-          color={
-            derived.avgProgress >= 65
-              ? 'text-success'
-              : derived.avgProgress >= 40
-                ? 'text-warning'
-                : 'text-danger'
-          }
         />
         {role !== 'staff' && (
           <StatCard
@@ -851,7 +857,6 @@ export default function DashboardPage() {
           <StatCard
             label={"Incidents\n(Last 60 Days)"}
             value={derived.incidents60Count}
-            color={derived.incidents60Count > 0 ? 'text-warning' : 'text-success'}
             onClick={() => setShowIncidentSummary(true)}
           />
         )}
@@ -859,7 +864,6 @@ export default function DashboardPage() {
           <StatCard
             label="Unresolved High Severity"
             value={derived.unresolvedHighSeverity}
-            color="text-danger"
             warning={derived.unresolvedHighSeverity > 0}
             onClick={() => setShowUnresolvedHigh(true)}
           />
@@ -873,13 +877,13 @@ export default function DashboardPage() {
 
       {/* ── Section 2: ML Insights Panel ───────────────────────────────── */}
       <div
-        className="card mb-4 shadow-sm"
-        style={{ borderLeft: '4px solid #0d9488' }}
+        className="card mb-4 shadow-sm border-0"
+        style={{ backgroundColor: '#fcf9f4' }}
       >
-        <div className="card-body" style={{ backgroundColor: '#f8fffe' }}>
+        <div className="card-body">
           <h5
             className="card-title fw-bold mb-3"
-            style={{ color: '#0d9488' }}
+            style={{ color: 'var(--primary-dark)' }}
           >
             60 Day Improvement Forecast
           </h5>
@@ -887,7 +891,6 @@ export default function DashboardPage() {
           {/* Distribution bands — click to filter */}
           <div className="d-flex flex-wrap gap-3 mb-4">
             <DistBadge
-              emoji="🟢"
               label="Likely Improving"
               count={derived.improvingList.length}
               total={derived.totalPredictions}
@@ -896,7 +899,6 @@ export default function DashboardPage() {
               onClick={() => toggleBand('improving')}
             />
             <DistBadge
-              emoji="🟡"
               label="Uncertain"
               count={derived.uncertainList.length}
               total={derived.totalPredictions}
@@ -905,7 +907,6 @@ export default function DashboardPage() {
               onClick={() => toggleBand('uncertain')}
             />
             <DistBadge
-              emoji="🔴"
               label="Needs Attention"
               count={derived.needsAttentionList.length}
               total={derived.totalPredictions}
@@ -914,7 +915,6 @@ export default function DashboardPage() {
               onClick={() => toggleBand('attention')}
             />
             <DistBadge
-              emoji="⚠️"
               label="Insufficient Data"
               count={derived.insufficientDataList.length}
               total={derived.totalPredictions}
@@ -1089,7 +1089,7 @@ export default function DashboardPage() {
                                 dominantBaseline="central"
                                 fontSize={13}
                                 fontWeight={600}
-                                fill={color}
+                                fill="#000"
                               >
                                 {labelText}
                               </text>
@@ -1107,30 +1107,11 @@ export default function DashboardPage() {
                           />
                         ))}
                       </Pie>
-                      <Tooltip
-                        content={// eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        ({ active, payload }: any) => {
-                          if (!active || !payload?.length) return null;
-                          const entry = payload[0];
-                          const name = String(entry.name ?? '');
-                          const value = Number(entry.value ?? 0);
-                          const color = RISK_COLORS[name] ?? '#6c757d';
-                          return (
-                            <div style={{
-                              background: '#fff',
-                              border: `1px solid ${color}`,
-                              borderRadius: 6,
-                              padding: '6px 12px',
-                              fontSize: 13,
-                              fontWeight: 600,
-                              color,
-                            }}>
-                              {name}: {value}
-                            </div>
-                          );
-                        }}
+                      <Legend
+                        formatter={(value) => (
+                          <span style={{ color: '#000' }}>{String(value)}</span>
+                        )}
                       />
-                      <Legend />
                       <text
                         x="50%"
                         y="46%"
@@ -1157,37 +1138,40 @@ export default function DashboardPage() {
                 {derived.recentIncidents.length === 0 ? (
                   <p className="text-muted mb-0">No incidents recorded.</p>
                 ) : (
-                  <div className="list-group list-group-flush">
-                    {derived.recentIncidents.map((inc) => (
-                      <div
-                        key={inc.incidentId}
-                        className={`list-group-item px-0 ${inc.resolved ? 'text-muted' : ''}`}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => setSelectedIncident(inc.incidentId)}
-                      >
-                        <div className="d-flex justify-content-between align-items-start">
-                          <div>
-                            <span className="fw-semibold me-2">
-                              {inc.incidentType}
-                            </span>
-                            <SeverityBadge severity={inc.severity} />
-                            <small className="text-muted">
-                              — {inc.internalCode}
-                            </small>
-                          </div>
-                          <div className="text-end">
-                            <small className="text-muted">
-                              {formatDate(inc.incidentDate)}
-                            </small>
-                            {inc.resolved && (
-                              <span className="badge bg-secondary ms-2">
-                                Resolved
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Type</th>
+                          <th>Urgency</th>
+                          <th>Case Number</th>
+                          <th>Date</th>
+                          <th>Resolved</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {derived.recentIncidents.map((inc) => (
+                          <tr
+                            key={inc.incidentId}
+                            className={inc.resolved ? 'text-muted' : ''}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setSelectedIncident(inc.incidentId)}
+                          >
+                            <td className="fw-semibold">{inc.incidentType}</td>
+                            <td><SeverityBadge severity={inc.severity} /></td>
+                            <td>{inc.internalCode}</td>
+                            <td>{formatDate(inc.incidentDate)}</td>
+                            <td>
+                              {inc.resolved ? (
+                                <span className="badge bg-secondary">Resolved</span>
+                              ) : (
+                                <span className="text-muted">No</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
@@ -1222,12 +1206,18 @@ export default function DashboardPage() {
                       <YAxis domain={[0, 100]} label={{ value: 'Score (%)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6c757d' } }} />
                       <Tooltip
                         formatter={(value: unknown, name: unknown) => [`${value}%`, String(name)]}
+                        itemStyle={{ color: '#000' }}
+                        labelStyle={{ color: '#000' }}
                       />
-                      <Legend />
-                      <Bar dataKey="Health" fill="#0d6efd" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                      <Bar dataKey="Education" fill="#198754" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                      <Bar dataKey="Emotional" fill="#6f42c1" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                      <Bar dataKey="Overall" fill="#fd7e14" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                      <Legend
+                        formatter={(value) => (
+                          <span style={{ color: '#000' }}>{String(value)}</span>
+                        )}
+                      />
+                      <Bar dataKey="Health" fill="#5C8A6B" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                      <Bar dataKey="Education" fill="#4A6FA5" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                      <Bar dataKey="Emotional" fill="#E9C46A" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                      <Bar dataKey="Overall" fill="#C47A5A" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -1272,12 +1262,18 @@ export default function DashboardPage() {
                           <YAxis domain={[0, 100]} label={{ value: 'Score (%)', angle: -90, position: 'insideLeft', style: { fontSize: 12, fill: '#6c757d' } }} />
                           <Tooltip
                             formatter={(value: unknown, name: unknown) => [`${value}%`, String(name)]}
+                            itemStyle={{ color: '#000' }}
+                            labelStyle={{ color: '#000' }}
                           />
-                          <Legend />
-                          <Bar dataKey="Health" fill="#0d6efd" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                          <Bar dataKey="Education" fill="#198754" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                          <Bar dataKey="Emotional" fill="#6f42c1" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
-                          <Bar dataKey="Overall" fill="#fd7e14" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                          <Legend
+                            formatter={(value) => (
+                              <span style={{ color: '#000' }}>{String(value)}</span>
+                            )}
+                          />
+                          <Bar dataKey="Health" fill="#5C8A6B" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                          <Bar dataKey="Education" fill="#4A6FA5" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                          <Bar dataKey="Emotional" fill="#E9C46A" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
+                          <Bar dataKey="Overall" fill="#C47A5A" onClick={(d: unknown) => setSelectedSafehouse((d as { safehouseId: number }).safehouseId)} />
                         </BarChart>
                       </ResponsiveContainer>
                     )}
@@ -1358,7 +1354,10 @@ export default function DashboardPage() {
                           <span className="fw-semibold">
                             Supporter #{don.supporterId}
                           </span>
-                          <span className="badge bg-info text-dark ms-2">
+                          <span
+                            className="badge ms-2"
+                            style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+                          >
                             {don.donationType}
                           </span>
                         </div>
@@ -1767,7 +1766,7 @@ export default function DashboardPage() {
                         <td className="text-muted">Status</td>
                         <td>
                           {inc.resolved ? (
-                            <span className="badge bg-success">Resolved</span>
+                            <span className="badge bg-secondary">Resolved</span>
                           ) : (
                             <span className="badge bg-danger">Unresolved</span>
                           )}
@@ -2213,9 +2212,9 @@ export default function DashboardPage() {
                           <tbody>
                             {[
                               { label: 'Health', val: chartRow.Health, color: '#0d6efd' },
-                              { label: 'Education', val: chartRow.Education, color: '#198754' },
+                              { label: 'Education', val: chartRow.Education, color: '#5C8A6B' },
                               { label: 'Emotional', val: chartRow.Emotional, color: '#6f42c1' },
-                              { label: 'Overall', val: chartRow.Overall, color: '#fd7e14' },
+                              { label: 'Overall', val: chartRow.Overall, color: '#C47A5A' },
                             ].map(({ label, val, color }) => (
                               <tr key={label}>
                                 <td className="text-muted" style={{ width: '35%' }}>{label}</td>

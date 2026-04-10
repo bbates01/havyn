@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Mission11_Bates.Data
 {
@@ -37,11 +39,34 @@ namespace Mission11_Bates.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // In our current DB schema, PartnerId is not auto-generated.
+            // Treat it as application-assigned to avoid EF inserting NULL.
+            modelBuilder.Entity<Partner>()
+                .Property(p => p.PartnerId)
+                .ValueGeneratedNever();
+
+            // In our current DB schema, PlanId is not auto-generated.
+            modelBuilder.Entity<InterventionPlan>()
+                .Property(p => p.PlanId)
+                .ValueGeneratedNever();
+
             modelBuilder.Entity<Supporter>()
                 .HasOne(s => s.User)
                 .WithMany()
                 .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // DB table (CSV baseline) has no SERIAL/identity on DonationId; inserts must supply PK.
+            modelBuilder.Entity<Donation>()
+                .Property(d => d.DonationId)
+                .ValueGeneratedNever();
+        }
+
+        public async Task<int> NextDonationIdAsync(CancellationToken cancellationToken = default)
+        {
+            if (!await Donations.AnyAsync(cancellationToken))
+                return 1;
+            return await Donations.MaxAsync(d => d.DonationId, cancellationToken) + 1;
         }
     }
 }

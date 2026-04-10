@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 
 namespace Mission11_Bates.Controllers
 {
@@ -13,11 +14,16 @@ namespace Mission11_Bates.Controllers
     {
         private readonly HavynDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IResidentAccessService _residentAccess;
 
-        public ProcessRecordingsController(HavynDbContext context, UserManager<ApplicationUser> userManager)
+        public ProcessRecordingsController(
+            HavynDbContext context,
+            UserManager<ApplicationUser> userManager,
+            IResidentAccessService residentAccess)
         {
             _context = context;
             _userManager = userManager;
+            _residentAccess = residentAccess;
         }
 
         private static bool IsSocialWorkerOnly(IList<string> roles) =>
@@ -50,7 +56,8 @@ namespace Mission11_Bates.Controllers
             return await _userManager.GetRolesAsync(caller);
         }
 
-        private async Task<ApplicationUser?> GetCallerAsync() => await _userManager.GetUserAsync(User);
+        private async Task<ApplicationUser?> GetCallerAsync() =>
+            await _userManager.GetUserAsync(User);
 
         [HttpGet("AllRecordings")]
         public async Task<IActionResult> GetAllRecordings(
@@ -64,23 +71,32 @@ namespace Mission11_Bates.Controllers
             var roles = await GetCallerRolesAsync();
             var stripNotes = IsSocialWorkerOnly(roles);
 
-            var query = _context.ProcessRecordings.AsQueryable();
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var allowedIds = _residentAccess.ResidentIdsInScope(_context, scope);
+            var query = _context.ProcessRecordings
+                .AsQueryable()
+                .Where(pr => allowedIds.Contains(pr.ResidentId));
 
             if (residentId.HasValue)
-            {
                 query = query.Where(pr => pr.ResidentId == residentId.Value);
-            }
 
             if (!string.IsNullOrEmpty(socialWorker))
-            {
                 query = query.Where(pr => pr.SocialWorker == socialWorker);
-            }
 
             query = sortBy switch
             {
-                "SessionDate" => sortOrder == "desc" ? query.OrderByDescending(pr => pr.SessionDate) : query.OrderBy(pr => pr.SessionDate),
-                "SessionType" => sortOrder == "desc" ? query.OrderByDescending(pr => pr.SessionType) : query.OrderBy(pr => pr.SessionType),
-                _ => sortOrder == "desc" ? query.OrderByDescending(pr => pr.SessionDate) : query.OrderBy(pr => pr.SessionDate)
+                "SessionDate" => sortOrder == "desc"
+                    ? query.OrderByDescending(pr => pr.SessionDate)
+                    : query.OrderBy(pr => pr.SessionDate),
+                "SessionType" => sortOrder == "desc"
+                    ? query.OrderByDescending(pr => pr.SessionType)
+                    : query.OrderBy(pr => pr.SessionType),
+                _ => sortOrder == "desc"
+                    ? query.OrderByDescending(pr => pr.SessionDate)
+                    : query.OrderBy(pr => pr.SessionDate)
             };
 
             var totalCount = await query.CountAsync();
@@ -102,12 +118,16 @@ namespace Mission11_Bates.Controllers
             var roles = await GetCallerRolesAsync();
             var stripNotes = IsSocialWorkerOnly(roles);
 
-            var recording = await _context.ProcessRecordings.FindAsync(recordingId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var recording = await _context.ProcessRecordings.FindAsync(recordingId);
             if (recording == null)
-            {
                 return NotFound(new { message = "Process recording not found" });
-            }
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, recording.ResidentId))
+                return NotFound(new { message = "Process recording not found" });
 
             return Ok(stripNotes ? CloneForWorkerResponse(recording) : recording);
         }
@@ -124,10 +144,18 @@ namespace Mission11_Bates.Controllers
             if (resident == null)
                 return BadRequest(new { message = "Resident not found." });
 
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, newRecording.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for this resident." });
+
             if (roles.Contains("Manager") && !roles.Contains("Admin"))
             {
                 if (caller.SafehouseId == null)
                     return StatusCode(403, new { message = "Your account is not assigned to a safehouse." });
+
                 if (resident.SafehouseId != caller.SafehouseId.Value)
                     return StatusCode(403, new { message = "You can only add recordings for residents in your safehouse." });
             }
@@ -141,7 +169,9 @@ namespace Mission11_Bates.Controllers
             if (appointmentId.HasValue)
             {
                 var appointment = await _context.Appointments.FindAsync(appointmentId.Value);
-                if (appointment != null && appointment.Status == "Scheduled")
+                if (appointment != null &&
+                    appointment.Status == "Scheduled" &&
+                    await _residentAccess.CanAccessResidentAsync(_context, scope, appointment.ResidentId))
                 {
                     appointment.Status = "Completed";
                     _context.Appointments.Update(appointment);
@@ -149,7 +179,10 @@ namespace Mission11_Bates.Controllers
                 }
             }
 
-            var response = IsSocialWorkerOnly(roles) ? CloneForWorkerResponse(newRecording) : newRecording;
+            var response = IsSocialWorkerOnly(roles)
+                ? CloneForWorkerResponse(newRecording)
+                : newRecording;
+
             return Ok(response);
         }
 
@@ -165,6 +198,13 @@ namespace Mission11_Bates.Controllers
             if (existing == null)
                 return NotFound(new { message = "Process recording not found" });
 
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, existing.ResidentId))
+                return StatusCode(403, new { message = "Not authorized to update this recording." });
+
             var residentForExisting = await _context.Residents.FindAsync(existing.ResidentId);
             if (residentForExisting == null)
                 return BadRequest(new { message = "Linked resident not found." });
@@ -173,12 +213,17 @@ namespace Mission11_Bates.Controllers
             if (residentForNew == null)
                 return BadRequest(new { message = "Resident not found." });
 
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, body.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for the target resident." });
+
             if (roles.Contains("Manager") && !roles.Contains("Admin"))
             {
                 if (caller.SafehouseId == null)
                     return StatusCode(403, new { message = "Your account is not assigned to a safehouse." });
+
                 if (residentForExisting.SafehouseId != caller.SafehouseId.Value)
                     return StatusCode(403, new { message = "You cannot update this recording." });
+
                 if (residentForNew.SafehouseId != caller.SafehouseId.Value)
                     return StatusCode(403, new { message = "You can only assign recordings to residents in your safehouse." });
             }
@@ -199,7 +244,7 @@ namespace Mission11_Bates.Controllers
 
             if (IsSocialWorkerOnly(roles))
             {
-                // Preserve restricted notes; ignore body
+                // Preserve restricted notes; ignore body.NotesRestricted
             }
             else
             {
@@ -208,7 +253,10 @@ namespace Mission11_Bates.Controllers
 
             await _context.SaveChangesAsync();
 
-            var response = IsSocialWorkerOnly(roles) ? CloneForWorkerResponse(existing) : existing;
+            var response = IsSocialWorkerOnly(roles)
+                ? CloneForWorkerResponse(existing)
+                : existing;
+
             return Ok(response);
         }
     }

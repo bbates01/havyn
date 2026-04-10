@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {
@@ -84,6 +84,15 @@ interface DonationTrendsDto {
   oneTimeDonors: number;
 }
 
+/** Progress model row from GET /api/ml/predictions */
+interface MlPredictionRow {
+  residentId: number;
+  overallScore: number | null;
+  healthProb: number | null;
+  educationProb: number | null;
+  emotionalProb: number | null;
+}
+
 type FetchError = { id: string; label: string; message: string };
 
 function extractItems<T>(raw: unknown): T[] {
@@ -127,6 +136,66 @@ function isActiveCaseStatus(status: string | null | undefined): boolean {
   return status?.trim().toLowerCase() === 'active';
 }
 
+function normalizeMlPredictionRow(raw: Record<string, unknown>): MlPredictionRow {
+  const rid = raw.residentId ?? raw.ResidentId;
+  const os = raw.overallScore ?? raw.OverallScore;
+  const hp = raw.healthProb ?? raw.HealthProb;
+  const ep = raw.educationProb ?? raw.EducationProb;
+  const em = raw.emotionalProb ?? raw.EmotionalProb;
+  const numOrNull = (v: unknown): number | null => {
+    if (v == null || v === '') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  return {
+    residentId: Number(rid),
+    overallScore: numOrNull(os),
+    healthProb: numOrNull(hp),
+    educationProb: numOrNull(ep),
+    emotionalProb: numOrNull(em),
+  };
+}
+
+function isActiveSafehouseStatus(status: string | null | undefined): boolean {
+  return status?.trim().toLowerCase() === 'active';
+}
+
+function scorePctTextClass(pct: number): string {
+  if (pct >= 65) return 'text-success';
+  if (pct >= 40) return 'text-warning';
+  return 'text-danger';
+}
+
+function bucketMidpointFill(midpoint: number, success: string, warning: string, danger: string): string {
+  if (midpoint >= 65) return success;
+  if (midpoint >= 40) return warning;
+  return danger;
+}
+
+type OverallDistMetric = 'overall' | 'health' | 'education' | 'emotional';
+
+function pickOverallDistScore(p: MlPredictionRow, m: OverallDistMetric): number | null {
+  switch (m) {
+    case 'overall':
+      return p.overallScore != null && !Number.isNaN(p.overallScore) ? p.overallScore : null;
+    case 'health':
+      return p.healthProb != null && !Number.isNaN(p.healthProb) ? p.healthProb : null;
+    case 'education':
+      return p.educationProb != null && !Number.isNaN(p.educationProb) ? p.educationProb : null;
+    case 'emotional':
+      return p.emotionalProb != null && !Number.isNaN(p.emotionalProb) ? p.emotionalProb : null;
+    default:
+      return null;
+  }
+}
+
+const OVERALL_DIST_METRIC_OPTIONS: { value: OverallDistMetric; label: string }[] = [
+  { value: 'overall', label: 'Overall' },
+  { value: 'health', label: 'Health' },
+  { value: 'education', label: 'Education' },
+  { value: 'emotional', label: 'Emotional' },
+];
+
 function isClosedCaseStatus(status: string | null | undefined): boolean {
   return status?.trim().toLowerCase() === 'closed';
 }
@@ -167,11 +236,17 @@ function safehouseDisplayLabel(sh: Safehouse | undefined): string {
 }
 
 const RISK_FILL: Record<string, string> = {
-  Low: 'var(--bs-success)',
-  Medium: 'var(--bs-warning)',
-  High: 'var(--bs-danger)',
-  Critical: 'var(--bs-dark)',
+  Low: '#5C8A6B',
+  Medium: '#E9C46A',
+  High: '#C47A5A',
+  Critical: '#C65B5B',
 };
+
+const THEME_BLUE = '#4A6FA5';
+const THEME_GREEN = '#5C8A6B';
+const THEME_TAN = '#E9C46A';
+const THEME_RED = '#C65B5B';
+const THEME_NEUTRAL = '#adb5bd';
 
 type SafehouseMetricTab = 'health' | 'education' | 'emotional' | 'overall';
 
@@ -259,6 +334,15 @@ export default function ReportsPage() {
   const [safehouses, setSafehouses] = useState<Safehouse[] | null>(null);
   const [residents, setResidents] = useState<Resident[] | null>(null);
   const [allocations, setAllocations] = useState<DonationAllocation[] | null>(null);
+  const [mlPredictions, setMlPredictions] = useState<MlPredictionRow[] | null>(null);
+
+  const [selectedOverallScoreSafehouseIds, setSelectedOverallScoreSafehouseIds] = useState<
+    number[]
+  >([]);
+  const [overallScoreShFilterOpen, setOverallScoreShFilterOpen] = useState(false);
+  const [overallDistMetric, setOverallDistMetric] = useState<OverallDistMetric>('overall');
+  const [overallDistMetricFilterOpen, setOverallDistMetricFilterOpen] = useState(false);
+  const overallProgressDistFiltersRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     if (role !== 'admin' && role !== 'manager') return;
@@ -274,6 +358,7 @@ export default function ReportsPage() {
     setSafehouses(null);
     setResidents(null);
     setAllocations(null);
+    setMlPredictions(null);
 
     const resUrl =
       role === 'manager' && safehouseId != null
@@ -291,6 +376,7 @@ export default function ReportsPage() {
       { id: 'dt', label: 'Donation trends', url: '/api/Reports/DonationTrends' },
       { id: 'mm', label: 'ML model meta', url: '/api/ml/model-meta' },
       { id: 'ir', label: 'Incident risk (ML)', url: '/api/ml/incident-risk' },
+      { id: 'mp', label: 'ML predictions', url: '/api/ml/predictions' },
       { id: 'sh', label: 'Safehouses', url: '/api/Safehouses/AllSafehouses?pageSize=100&pageIndex=1' },
       { id: 'rs', label: 'Residents', url: resUrl },
       { id: 'rs-min', label: 'Earliest resident date', url: earliestResUrl },
@@ -335,6 +421,13 @@ export default function ReportsPage() {
             break;
           case 'ir':
             break;
+          case 'mp': {
+            const arr = Array.isArray(data)
+              ? (data as Record<string, unknown>[])
+              : extractItems<Record<string, unknown>>(data);
+            setMlPredictions(arr.map(normalizeMlPredictionRow));
+            break;
+          }
           case 'sh':
             setSafehouses(extractItems<Safehouse>(data));
             break;
@@ -441,10 +534,10 @@ export default function ReportsPage() {
       }
       const fill =
         value >= 50
-          ? 'var(--bs-success)'
+          ? THEME_GREEN
           : value >= 40
-            ? 'var(--bs-warning)'
-            : 'var(--bs-danger)';
+            ? THEME_TAN
+            : THEME_RED;
       return { name: cityName, value, fill };
     });
   }, [comparisonRowsScoped, safehouseMap, safehouseMetricTab]);
@@ -658,13 +751,171 @@ export default function ReportsPage() {
     setSocialTab(preferred);
   }, [socialPlatformKeys, socialTab]);
 
+  useEffect(() => {
+    if (!overallScoreShFilterOpen && !overallDistMetricFilterOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const root = overallProgressDistFiltersRef.current;
+      if (root && !root.contains(e.target as Node)) {
+        setOverallScoreShFilterOpen(false);
+        setOverallDistMetricFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [overallScoreShFilterOpen, overallDistMetricFilterOpen]);
+
+  const bsMlBarColors = useMemo(() => {
+    const r = document.documentElement;
+    const cs = getComputedStyle(r);
+    return {
+      success: cs.getPropertyValue('--bs-success').trim() || '#198754',
+      warning: cs.getPropertyValue('--bs-warning').trim() || '#ffc107',
+      danger: cs.getPropertyValue('--bs-danger').trim() || '#dc3545',
+    };
+  }, []);
+
+  const activeSafehousesForOverallFilter = useMemo(() => {
+    return (safehouses ?? [])
+      .filter((s) => isActiveSafehouseStatus(s.status))
+      .sort((a, b) =>
+        safehouseDisplayLabel(a).localeCompare(safehouseDisplayLabel(b), undefined, {
+          sensitivity: 'base',
+        })
+      );
+  }, [safehouses]);
+
+  const overallProgressScopedScores = useMemo(() => {
+    if (!residents || !mlPredictions) return [];
+    let scoped = residents.filter((r) => isActiveCaseStatus(r.caseStatus));
+    if (role === 'manager' && safehouseId != null) {
+      scoped = scoped.filter((r) => r.safehouseId === safehouseId);
+    } else if (role === 'admin' && selectedOverallScoreSafehouseIds.length > 0) {
+      scoped = scoped.filter((r) =>
+        selectedOverallScoreSafehouseIds.includes(r.safehouseId)
+      );
+    }
+    const idSet = new Set(scoped.map((r) => r.residentId));
+    const out: number[] = [];
+    for (const p of mlPredictions) {
+      if (!idSet.has(p.residentId)) continue;
+      const v = pickOverallDistScore(p, overallDistMetric);
+      if (v == null || Number.isNaN(v)) continue;
+      out.push(v);
+    }
+    return out;
+  }, [
+    residents,
+    mlPredictions,
+    role,
+    safehouseId,
+    selectedOverallScoreSafehouseIds,
+    overallDistMetric,
+  ]);
+
+  const overallProgressHistogramData = useMemo(() => {
+    const scores = overallProgressScopedScores;
+    const edges = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const rows: { range: string; count: number; midpoint: number }[] = [];
+    for (let i = 0; i < 9; i++) {
+      const low = edges[i]!;
+      const high = edges[i + 1]!;
+      let count = 0;
+      for (const os of scores) {
+        const p = os * 100;
+        if (p >= low && p < high) count++;
+      }
+      rows.push({
+        range: `${low}-${high}%`,
+        count,
+        midpoint: (low + high) / 2,
+      });
+    }
+    let cLast = 0;
+    for (const os of scores) {
+      const p = os * 100;
+      if (p >= 90 && p <= 100) cLast++;
+    }
+    rows.push({ range: '90-100%', count: cLast, midpoint: 95 });
+    return rows;
+  }, [overallProgressScopedScores]);
+
+  const overallProgressStats = useMemo(() => {
+    const scores = overallProgressScopedScores;
+    const n = scores.length;
+    if (n === 0) {
+      return {
+        mean: null as number | null,
+        median: null as number | null,
+        n: 0,
+        meanClass: 'text-muted',
+        medianClass: 'text-muted',
+      };
+    }
+    const meanRaw = scores.reduce((a, b) => a + b, 0) / n;
+    const meanPct = Math.round(meanRaw * 1000) / 10;
+    const sorted = [...scores].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const medianRaw =
+      sorted.length % 2 === 1
+        ? sorted[mid]!
+        : (sorted[mid - 1]! + sorted[mid]!) / 2;
+    const medianPct = Math.round(medianRaw * 1000) / 10;
+    return {
+      mean: meanPct,
+      median: medianPct,
+      n,
+      meanClass: scorePctTextClass(meanPct),
+      medianClass: scorePctTextClass(medianPct),
+    };
+  }, [overallProgressScopedScores]);
+
+  const overallScoreFilterButtonLabel = useMemo(() => {
+    if (selectedOverallScoreSafehouseIds.length === 0) return 'All Safehouses';
+    if (selectedOverallScoreSafehouseIds.length === 1) {
+      const sh = safehouseMap.get(selectedOverallScoreSafehouseIds[0]!);
+      const city = sh?.city?.trim();
+      return city || safehouseDisplayLabel(sh) || '1 Selected';
+    }
+    return `${selectedOverallScoreSafehouseIds.length} Selected`;
+  }, [selectedOverallScoreSafehouseIds, safehouseMap]);
+
+  const overallDistMetricButtonLabel = useMemo(() => {
+    switch (overallDistMetric) {
+      case 'overall':
+        return 'Overall';
+      case 'health':
+        return 'Health';
+      case 'education':
+        return 'Education';
+      case 'emotional':
+        return 'Emotional';
+      default:
+        return 'Overall';
+    }
+  }, [overallDistMetric]);
+
+  const overallDistXAxisLabel = useMemo(() => {
+    switch (overallDistMetric) {
+      case 'overall':
+        return 'Overall Score (%)';
+      case 'health':
+        return 'Health (%)';
+      case 'education':
+        return 'Education (%)';
+      case 'emotional':
+        return 'Emotional (%)';
+      default:
+        return 'Score (%)';
+    }
+  }, [overallDistMetric]);
+
   if (authLoading) {
     return (
       <div
         className="d-flex justify-content-center align-items-center"
         style={{ minHeight: '60vh' }}
       >
-        <div className="spinner-border text-primary" role="status">
+        <div className="spinner-border" style={{ color: THEME_BLUE }} role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
       </div>
@@ -683,7 +934,7 @@ export default function ReportsPage() {
     return (
       <div className="container py-4">
         <div className="text-center py-5">
-          <div className="spinner-border text-primary mb-3" role="status" />
+          <div className="spinner-border mb-3" style={{ color: THEME_BLUE }} role="status" />
           <p className="text-muted">Loading reports…</p>
         </div>
       </div>
@@ -691,13 +942,22 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="container-fluid py-4 px-3 px-md-4">
+    <div className="container-fluid py-4 px-3 px-md-4 dashboard-theme">
       <h1 className="h3 fw-bold mb-4">Reports and Analytics</h1>
 
       {fetchErrors
         .filter((e) => !dismissedErrors.has(e.id))
         .map((e) => (
-          <div key={e.id} className="alert alert-warning alert-dismissible" role="alert">
+          <div
+            key={e.id}
+            className="alert alert-dismissible"
+            role="alert"
+            style={{
+              backgroundColor: '#fcf4df',
+              borderColor: THEME_TAN,
+              color: '#33271d',
+            }}
+          >
             <strong>{e.label}</strong> could not be loaded: {e.message}
             <button
               type="button"
@@ -746,7 +1006,8 @@ export default function ReportsPage() {
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv('reports-ml-meta.csv', [
                   ...incidentFactors.map((f) => ({
@@ -782,9 +1043,215 @@ export default function ReportsPage() {
             </button>
           </div>
 
+          <div className="card shadow-sm mb-4">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                <h5 className="fw-semibold border-start border-4 border-primary ps-3 mb-0">
+                  Overall Progress Score Distribution
+                </h5>
+                <div
+                  ref={overallProgressDistFiltersRef}
+                  className="d-flex flex-wrap gap-2 align-items-start justify-content-end"
+                >
+                  {role === 'admin' && (
+                    <div className="position-relative flex-shrink-0">
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
+                        onClick={() => setOverallScoreShFilterOpen((o) => !o)}
+                        aria-expanded={overallScoreShFilterOpen}
+                      >
+                        <span className="text-truncate" style={{ maxWidth: 180 }}>
+                          {overallScoreFilterButtonLabel}
+                        </span>
+                        <span className="ms-1 small" aria-hidden>
+                          ▾
+                        </span>
+                      </button>
+                      {overallScoreShFilterOpen ? (
+                        <div
+                          className="position-absolute bg-white border rounded shadow-sm mt-1 py-2 px-2 end-0"
+                          style={{ zIndex: 1000, minWidth: 220 }}
+                        >
+                          <label className="d-flex align-items-center gap-2 small mb-2 user-select-none">
+                            <input
+                              type="checkbox"
+                              className="form-check-input mt-0"
+                              checked={selectedOverallScoreSafehouseIds.length === 0}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedOverallScoreSafehouseIds([]);
+                                }
+                              }}
+                            />
+                            All Safehouses
+                          </label>
+                          <hr className="my-2" />
+                          {activeSafehousesForOverallFilter.map((sh) => (
+                            <label
+                              key={sh.safehouseId}
+                              className="d-flex align-items-center gap-2 small mb-1 user-select-none"
+                            >
+                              <input
+                                type="checkbox"
+                                className="form-check-input mt-0"
+                                checked={selectedOverallScoreSafehouseIds.includes(
+                                  sh.safehouseId
+                                )}
+                                onChange={() => {
+                                  setSelectedOverallScoreSafehouseIds((prev) =>
+                                    prev.includes(sh.safehouseId)
+                                      ? prev.filter((id) => id !== sh.safehouseId)
+                                      : [...prev, sh.safehouseId].sort((a, b) => a - b)
+                                  );
+                                }}
+                              />
+                              {safehouseDisplayLabel(sh)}
+                            </label>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                  <div className="position-relative flex-shrink-0">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
+                      onClick={() => setOverallDistMetricFilterOpen((o) => !o)}
+                      aria-expanded={overallDistMetricFilterOpen}
+                    >
+                      <span className="text-truncate" style={{ maxWidth: 160 }}>
+                        {overallDistMetricButtonLabel}
+                      </span>
+                      <span className="ms-1 small" aria-hidden>
+                        ▾
+                      </span>
+                    </button>
+                    {overallDistMetricFilterOpen ? (
+                      <div
+                        className="position-absolute bg-white border rounded shadow-sm mt-1 py-2 px-2 end-0"
+                        style={{ zIndex: 1000, minWidth: 200 }}
+                        role="listbox"
+                        aria-label="Score type"
+                      >
+                        {OVERALL_DIST_METRIC_OPTIONS.map((opt) => (
+                          <label
+                            key={opt.value}
+                            className="d-flex align-items-center gap-2 small mb-1 user-select-none"
+                          >
+                            <input
+                              type="radio"
+                              className="form-check-input mt-0"
+                              name="overall-dist-metric"
+                              checked={overallDistMetric === opt.value}
+                              onChange={() => {
+                                setOverallDistMetric(opt.value);
+                                setOverallDistMetricFilterOpen(false);
+                              }}
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+              {overallProgressStats.n === 0 ? (
+                <p className="text-muted small mb-0">
+                  No prediction data available for the current filters.
+                </p>
+              ) : (
+                <div className="row g-3 align-items-center">
+                  <div className="col-md-8 col-12">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart
+                        data={overallProgressHistogramData}
+                        margin={{ top: 8, right: 8, left: 8, bottom: 28 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-25" />
+                        <XAxis
+                          dataKey="range"
+                          tick={{ fontSize: 10 }}
+                          label={{
+                            value: overallDistXAxisLabel,
+                            position: 'insideBottom',
+                            offset: -8,
+                            style: { fontSize: 12 },
+                          }}
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          domain={[0, 'auto']}
+                          label={{
+                            value: 'Residents',
+                            angle: -90,
+                            position: 'insideLeft',
+                            style: { fontSize: 12, textAnchor: 'middle' },
+                          }}
+                        />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            const count = Number(payload[0]?.value ?? 0);
+                            return (
+                              <div className="small bg-white border rounded shadow-sm px-2 py-1">
+                                {count} resident{count === 1 ? '' : 's'} in this range
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                          {overallProgressHistogramData.map((entry) => (
+                            <Cell
+                              key={entry.range}
+                              fill={bucketMidpointFill(
+                                entry.midpoint,
+                                bsMlBarColors.success,
+                                bsMlBarColors.warning,
+                                bsMlBarColors.danger
+                              )}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="col-md-4 col-12">
+                    <div className="d-flex flex-column justify-content-center h-100 gap-3">
+                      <div className="bg-light border-0 rounded p-3">
+                        <div className="small text-muted mb-1">Mean / Average</div>
+                        <div
+                          className={`fs-2 fw-bold ${overallProgressStats.meanClass}`}
+                        >
+                          {overallProgressStats.mean != null
+                            ? `${overallProgressStats.mean.toFixed(1)}%`
+                            : '—'}
+                        </div>
+                      </div>
+                      <div className="bg-light border-0 rounded p-3">
+                        <div className="small text-muted mb-1">Median</div>
+                        <div
+                          className={`fs-2 fw-bold ${overallProgressStats.medianClass}`}
+                        >
+                          {overallProgressStats.median != null
+                            ? `${overallProgressStats.median.toFixed(1)}%`
+                            : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {modelMeta ? (
             <>
-              <h5 className="fw-semibold border-start border-4 border-primary ps-3 mb-2">
+              <h5
+                className="fw-semibold border-start border-4 ps-3 mb-2"
+                style={{ borderColor: THEME_BLUE }}
+              >
                 What Drives High-Severity Incidents?
               </h5>
               {incidentFactors.length === 0 ? null : (
@@ -798,8 +1265,12 @@ export default function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" className="opacity-25" />
                       <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                       <YAxis type="category" dataKey="label" width={200} tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v) => [`${v}%`, 'Importance']} />
-                      <Bar dataKey="importance" fill="var(--bs-primary)" radius={[0, 4, 4, 0]} />
+                      <Tooltip
+                        formatter={(v) => [`${v}%`, 'Importance']}
+                        itemStyle={{ color: '#000' }}
+                        labelStyle={{ color: '#000' }}
+                      />
+                      <Bar dataKey="importance" fill={THEME_BLUE} radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </>
@@ -811,7 +1282,10 @@ export default function ReportsPage() {
                 <>
                   <hr className="my-4" />
 
-                  <h5 className="fw-semibold border-start border-4 border-primary ps-3 mt-4 mb-2">
+                  <h5
+                    className="fw-semibold border-start border-4 ps-3 mt-4 mb-2"
+                    style={{ borderColor: THEME_BLUE }}
+                  >
                     What Predicts How Long a Resident Stays
                   </h5>
                   <p className="small text-muted mb-3">
@@ -876,7 +1350,7 @@ export default function ReportsPage() {
                   </p>
                   <div className="table-responsive mb-4">
                     <table className="table table-sm">
-                      <thead className="table-light">
+                      <thead style={{ backgroundColor: '#fcf9f4' }}>
                         <tr>
                           <th>Pathway</th>
                           <th className="text-end">Avg stay (months)</th>
@@ -898,7 +1372,15 @@ export default function ReportsPage() {
                   <h6 className="fw-semibold mb-2">Reintegration timeline insights</h6>
                   {reintMetaBlock.sample_size_warning != null &&
                     String(reintMetaBlock.sample_size_warning).length > 0 && (
-                      <div className="alert alert-warning" role="alert">
+                      <div
+                        className="alert"
+                        role="alert"
+                        style={{
+                          backgroundColor: '#fcf4df',
+                          borderColor: THEME_TAN,
+                          color: '#33271d',
+                        }}
+                      >
                         {String(reintMetaBlock.sample_size_warning)}
                       </div>
                     )}
@@ -907,7 +1389,10 @@ export default function ReportsPage() {
                 </>
               )}
 
-              <h5 className="fw-semibold border-start border-4 border-primary ps-3 mb-2">
+              <h5
+                className="fw-semibold border-start border-4 ps-3 mb-2"
+                style={{ borderColor: THEME_BLUE }}
+              >
                 What Social Media Content Leads to More Donor Referrals?
               </h5>
               <p className="small text-muted mb-3">
@@ -1037,12 +1522,16 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Resident outcomes
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv('reports-resident-outcomes.csv', [
                   {
@@ -1091,12 +1580,12 @@ export default function ReportsPage() {
                       {riskDonutData.map((entry) => (
                         <Cell
                           key={entry.name}
-                          fill={RISK_FILL[entry.name] ?? 'var(--bs-secondary)'}
+                          fill={RISK_FILL[entry.name] ?? THEME_NEUTRAL}
                         />
                       ))}
                     </Pie>
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip itemStyle={{ color: '#000' }} labelStyle={{ color: '#000' }} />
+                    <Legend formatter={(value) => <span style={{ color: '#000' }}>{value}</span>} />
                     <text
                       x="50%"
                       y="46%"
@@ -1116,7 +1605,7 @@ export default function ReportsPage() {
               <h6 className="fw-semibold mb-2">Residents by safehouse</h6>
               <div className="table-responsive">
                 <table className="table table-sm table-hover">
-                  <thead className="table-light">
+                  <thead style={{ backgroundColor: '#fcf9f4' }}>
                     <tr>
                       <th>Safehouse</th>
                       <th className="text-end">Count</th>
@@ -1144,7 +1633,7 @@ export default function ReportsPage() {
               <h6 className="fw-semibold mt-4 mb-2">Reintegration success</h6>
               <div className="table-responsive">
                 <table className="table table-sm table-hover">
-                  <thead className="table-light">
+                  <thead style={{ backgroundColor: '#fcf9f4' }}>
                     <tr>
                       <th>Pathway</th>
                       <th className="text-end">Completed</th>
@@ -1181,12 +1670,16 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Services provided
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv('reports-services-provided.csv', [
                   {
@@ -1220,8 +1713,8 @@ export default function ReportsPage() {
           </div>
           <div className="row g-3">
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="display-6 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.caring ?? '—'}
                 </div>
                 <div className="fw-semibold">Caring</div>
@@ -1231,8 +1724,8 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="display-6 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.healing ?? '—'}
                 </div>
                 <div className="fw-semibold">Healing</div>
@@ -1242,8 +1735,8 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="display-6 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.teaching ?? '—'}
                 </div>
                 <div className="fw-semibold">Teaching</div>
@@ -1251,8 +1744,8 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="fs-4 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="fs-4 fw-bold" style={{ color: THEME_BLUE }}>
                   <span>{servicesProvided?.legalReferrals ?? '—'}</span>
                   <span className="text-muted fw-normal"> + </span>
                   <span>{servicesProvided?.legalPlans ?? '—'}</span>
@@ -1272,12 +1765,16 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Safehouse performance comparison
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv(
                   'reports-safehouse-comparison.csv',
@@ -1300,7 +1797,7 @@ export default function ReportsPage() {
 
           <div className="table-responsive mb-4">
             <table className="table table-sm table-hover align-middle">
-              <thead className="table-light">
+              <thead style={{ backgroundColor: '#fcf9f4' }}>
                 <tr>
                   <th>Safehouse</th>
                   <th className="text-end">Active res. (avg)</th>
@@ -1354,7 +1851,20 @@ export default function ReportsPage() {
                     <li className="nav-item" key={key}>
                       <button
                         type="button"
-                        className={`nav-link py-1 px-2 ${safehouseMetricTab === key ? 'active' : ''}`}
+                        className="nav-link py-1 px-2"
+                        style={
+                          safehouseMetricTab === key
+                            ? {
+                                backgroundColor: THEME_BLUE,
+                                borderColor: THEME_BLUE,
+                                color: '#fff',
+                              }
+                            : {
+                                color: THEME_BLUE,
+                                border: `1px solid ${THEME_BLUE}`,
+                                backgroundColor: '#fff',
+                              }
+                        }
                         onClick={() => setSafehouseMetricTab(key)}
                       >
                         {label}
@@ -1381,7 +1891,11 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-25" />
                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                   <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v) => [`${v}%`, 'Score']} />
+                  <Tooltip
+                    formatter={(v) => [`${v}%`, 'Score']}
+                    itemStyle={{ color: '#000' }}
+                    labelStyle={{ color: '#000' }}
+                  />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                     {safehouseMetricBarData.map((entry, i) => (
                       <Cell key={i} fill={entry.fill} />
@@ -1403,7 +1917,10 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Donation trends
             </h2>
             <span className="small text-muted">
@@ -1417,7 +1934,8 @@ export default function ReportsPage() {
                 <h6 className="mb-0">Top campaigns</h6>
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-sm"
+                  style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
                   onClick={() =>
                     downloadCsv(
                       'reports-donations-campaigns.csv',
@@ -1449,7 +1967,7 @@ export default function ReportsPage() {
                         value: 'Total donation amount (₱)',
                         position: 'insideBottom',
                         offset: -4,
-                        style: { fontSize: 12, fill: 'var(--bs-secondary)' },
+                        style: { fontSize: 12, fill: THEME_NEUTRAL },
                       }}
                     />
                     <YAxis
@@ -1461,14 +1979,16 @@ export default function ReportsPage() {
                         value: 'Campaign',
                         angle: -90,
                         position: 'insideLeft',
-                        style: { fontSize: 12, fill: 'var(--bs-secondary)' },
+                        style: { fontSize: 12, fill: THEME_NEUTRAL },
                       }}
                     />
                     <Tooltip
                       formatter={(v) => [formatPhpAmount(Number(v)), 'Total raised']}
                       labelFormatter={(name) => String(name)}
+                      itemStyle={{ color: '#000' }}
+                      labelStyle={{ color: '#000' }}
                     />
-                    <Bar dataKey="totalValue" fill="var(--bs-info)" name="Total raised" />
+                    <Bar dataKey="totalValue" fill={THEME_BLUE} name="Total raised" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -1479,7 +1999,8 @@ export default function ReportsPage() {
                 <h6 className="mb-0">Recurring vs one-time donors</h6>
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-sm"
+                  style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
                   onClick={() => downloadCsv('reports-donors-type.csv', donorDonutData)}
                 >
                   Export CSV
@@ -1499,12 +2020,12 @@ export default function ReportsPage() {
                     {donorDonutData.map((_, i) => (
                       <Cell
                         key={i}
-                        fill={i === 0 ? 'var(--bs-primary)' : 'var(--bs-secondary)'}
+                        fill={i === 0 ? THEME_BLUE : THEME_NEUTRAL}
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip itemStyle={{ color: '#000' }} labelStyle={{ color: '#000' }} />
+                  <Legend formatter={(value) => <span style={{ color: '#000' }}>{value}</span>} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -1514,7 +2035,8 @@ export default function ReportsPage() {
                 <h6 className="mb-0">Donation Allocations by Program Area (₱)</h6>
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-sm"
+                  style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
                   onClick={() =>
                     downloadCsv(
                       'reports-allocations-program.csv',
@@ -1548,8 +2070,10 @@ export default function ReportsPage() {
                     <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
                     <Tooltip
                       formatter={(v) => [formatPhpAmount(Number(v)), 'Allocated']}
+                      itemStyle={{ color: '#000' }}
+                      labelStyle={{ color: '#000' }}
                     />
-                    <Bar dataKey="value" fill="var(--bs-primary)" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="value" fill={THEME_BLUE} radius={[0, 4, 4, 0]}>
                       <LabelList
                         dataKey="value"
                         position="right"

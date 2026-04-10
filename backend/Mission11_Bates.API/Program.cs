@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -12,9 +16,55 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.NumberHandling =
         JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });
+
+// #region agent log
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        try
+        {
+            var errors = context.ModelState
+                .Where(kvp => kvp.Value?.Errors?.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+
+            var payload = new
+            {
+                sessionId = "128924",
+                runId = "pre-fix",
+                hypothesisId = "H6",
+                location = "Program.cs:InvalidModelStateResponseFactory",
+                message = "Automatic 400 due to invalid model state",
+                data = new
+                {
+                    path = context.HttpContext.Request.Path.Value,
+                    method = context.HttpContext.Request.Method,
+                    contentType = context.HttpContext.Request.ContentType,
+                    errors,
+                },
+                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            };
+
+            System.IO.File.AppendAllText(
+                "/Users/joshuasolano/Desktop/BYU/IS_JC_Core/INTEX II/webApp/.cursor/debug-128924.log",
+                JsonSerializer.Serialize(payload) + "\n");
+
+            // Return a JSON body so the frontend can surface real errors.
+            return new BadRequestObjectResult(new { message = "Validation failed", errors });
+        }
+        catch
+        {
+            return new BadRequestObjectResult(new { message = "Validation failed" });
+        }
+    };
+});
+// #endregion agent log
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -36,6 +86,7 @@ if (string.IsNullOrWhiteSpace(defaultConnectionString) ||
 }
 
 builder.Services.AddDbContext<HavynDbContext>(options => options.UseNpgsql(defaultConnectionString));
+builder.Services.AddScoped<IResidentAccessService, ResidentAccessService>();
 
 // Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -90,6 +141,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CaseAccess", p => p.RequireRole("Admin", "Manager", "SocialWorker"));
     options.AddPolicy("DonorAccess", p => p.RequireRole("Donor"));
     options.AddPolicy("InternalStaff", p => p.RequireRole("Admin", "Manager", "SocialWorker"));
+    options.AddPolicy("DonorRecordManagement", p => p.RequireRole("Admin", "Manager"));
+    options.AddPolicy("StaffAccountManagement", p => p.RequireRole("Admin", "Manager"));
 });
 
 // CORS
@@ -121,10 +174,23 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed roles and users on startup
+// Seed roles and users on startup; ensure additive columns exist when EF migration history is behind deployment.
 using (var scope = app.Services.CreateScope())
 {
-    await SeedData.Initialize(scope.ServiceProvider);
+    var sp = scope.ServiceProvider;
+    var db = sp.GetRequiredService<HavynDbContext>();
+    await db.Database.ExecuteSqlRawAsync(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'Donations' AND column_name = 'RecurringFrequency') THEN
+                ALTER TABLE "Donations" ADD "RecurringFrequency" text;
+            END IF;
+        END $$;
+        """);
+    await SeedData.Initialize(sp);
 }
 
 app.Run();

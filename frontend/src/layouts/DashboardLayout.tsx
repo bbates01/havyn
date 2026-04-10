@@ -21,12 +21,18 @@ function DashboardLayout() {
 
   const dashPath = base;
   const caseloadPath = `${base}/caseload`;
+  const donorsPath = `${base}/donors`;
+  const partnersPath = `${base}/partners`;
+  const caseConferencesPath = `${base}/case-conferences`;
   const reportsPath = `${base}/reports`;
-  const createUserPath = `${base}/create-user`;
+  const accountsPath = `${base}/accounts`;
   const formsPath = `${base}/forms`;
 
   const showReportsTab = role === 'admin' || role === 'manager';
-  const showCreateUser = role === 'admin' || role === 'manager';
+  const showDonorsTab = role === 'admin' || role === 'manager';
+  const showPartnersTab = role === 'admin' || role === 'manager';
+  const showCaseConferencesTab = role === 'manager';
+  const showAccountsTab = role === 'admin' || role === 'manager' || role === 'staff';
   const showFormsNav = role === 'admin' || role === 'manager' || role === 'staff';
 
   return (
@@ -55,6 +61,42 @@ function DashboardLayout() {
                 Caseload
               </NavLink>
             </li>
+            {showDonorsTab && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={donorsPath}
+                >
+                  Donor Info
+                </NavLink>
+              </li>
+            )}
+            {showPartnersTab && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={partnersPath}
+                >
+                  Partners
+                </NavLink>
+              </li>
+            )}
+            {showCaseConferencesTab && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={caseConferencesPath}
+                >
+                  Case Conferences
+                </NavLink>
+              </li>
+            )}
             {showReportsTab && (
               <li className="nav-item">
                 <NavLink
@@ -67,15 +109,15 @@ function DashboardLayout() {
                 </NavLink>
               </li>
             )}
-            {showCreateUser && (
+            {showAccountsTab && (
               <li className="nav-item">
                 <NavLink
                   className={({ isActive }) =>
                     `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
                   }
-                  to={createUserPath}
+                  to={accountsPath}
                 >
-                  Create User
+                  Accounts
                 </NavLink>
               </li>
             )}

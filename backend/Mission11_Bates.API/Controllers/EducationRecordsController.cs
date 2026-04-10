@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mission11_Bates.Data;
+using Mission11_Bates.Services;
 
 namespace Mission11_Bates.Controllers
 {
@@ -9,24 +11,32 @@ namespace Mission11_Bates.Controllers
     [Authorize(Policy = "CaseAccess")]
     public class EducationRecordsController : ControllerBase
     {
-        private HavynDbContext _context;
+        private readonly HavynDbContext _context;
+        private readonly IResidentAccessService _residentAccess;
 
-        public EducationRecordsController(HavynDbContext temp) => _context = temp;
+        public EducationRecordsController(HavynDbContext context, IResidentAccessService residentAccess)
+        {
+            _context = context;
+            _residentAccess = residentAccess;
+        }
 
         [HttpGet("AllRecords")]
-        public IActionResult GetAllRecords(
+        public async Task<IActionResult> GetAllRecords(
             int pageSize = 25,
             int pageIndex = 1,
             string sortBy = "RecordDate",
             string sortOrder = "desc",
             int? residentId = null)
         {
-            var query = _context.EducationRecords.AsQueryable();
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            var allowedIds = _residentAccess.ResidentIdsInScope(_context, scope);
+            var query = _context.EducationRecords.AsQueryable().Where(er => allowedIds.Contains(er.ResidentId));
 
             if (residentId.HasValue)
-            {
                 query = query.Where(er => er.ResidentId == residentId.Value);
-            }
 
             query = sortBy switch
             {
@@ -36,38 +46,47 @@ namespace Mission11_Bates.Controllers
                 _ => sortOrder == "desc" ? query.OrderByDescending(er => er.RecordDate) : query.OrderBy(er => er.RecordDate)
             };
 
-            var totalCount = query.Count();
-
-            var items = query
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
             return Ok(new { Items = items, TotalCount = totalCount });
         }
 
         [HttpGet("GetRecord/{educationRecordId}")]
-        public IActionResult GetRecord(int educationRecordId)
+        public async Task<IActionResult> GetRecord(int educationRecordId)
         {
-            var record = _context.EducationRecords.Find(educationRecordId);
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
 
+            var record = await _context.EducationRecords.FindAsync(educationRecordId);
             if (record == null)
-            {
                 return NotFound(new { message = "Education record not found" });
-            }
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, record.ResidentId))
+                return NotFound(new { message = "Education record not found" });
 
             return Ok(record);
         }
 
         [HttpPost("AddRecord")]
-        public IActionResult AddRecord([FromBody] EducationRecord newRecord)
+        public async Task<IActionResult> AddRecord([FromBody] EducationRecord newRecord)
         {
             newRecord.EducationRecordId = _context.EducationRecords.Any()
                 ? _context.EducationRecords.Max(r => r.EducationRecordId) + 1
                 : 1;
+            var scope = await _residentAccess.GetScopeAsync(User);
+            if (!_residentAccess.ScopeAllowsCaseAccess(scope))
+                return StatusCode(403, new { message = "Account is not configured for case access." });
+
+            if (!await _residentAccess.CanAccessResidentAsync(_context, scope, newRecord.ResidentId))
+                return StatusCode(403, new { message = "Not authorized for this resident." });
 
             _context.EducationRecords.Add(newRecord);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(newRecord);
         }
 

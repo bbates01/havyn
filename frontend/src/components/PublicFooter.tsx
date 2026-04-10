@@ -38,7 +38,7 @@ function PublicFooter() {
           <h4>Impact</h4>
           <ul>
             <li>
-              <Link to="/donor-impact">Donor Impact</Link>
+              <Link to="/donor">Donor Impact</Link>
             </li>
             <li><span>Stories of Hope</span></li>
             <li><span>Annual Results</span></li>
@@ -65,7 +65,7 @@ function PublicFooter() {
               <Link to="/">Home</Link>
             </li>
             <li>
-              <Link to="/login">Donate</Link>
+              <Link to="/login?from=donate">Donate</Link>
             </li>
             <li>
               <Link to="/privacy">Privacy Policy</Link>

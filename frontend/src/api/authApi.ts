@@ -6,6 +6,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? '';
 
 export interface AuthSession {
   isAuthenticated: boolean;
+  displayName?: string;
   userName?: string;
   email?: string;
   roles: string[];
