@@ -5,7 +5,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/" replace />;
+  if (!isAuthenticated) return <Navigate to="/unauthorized" replace />;
 
   return <>{children}</>;
 }

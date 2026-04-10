@@ -28,6 +28,8 @@ const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
 const ResidentIntakePage = lazy(() => import('./pages/ResidentIntakePage'));
 const FormsPage = lazy(() => import('./pages/FormsPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 
 function RouteFallback() {
   return (
@@ -56,6 +58,7 @@ function App() {
               <Route path="/donor-impact" element={<Navigate to="/donor" replace />} />
               <Route path="/api-test" element={<ApiTestPage />} />
               <Route path="/ml-test" element={<MlTestPage />} />
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route element={<DashboardLayout />}>
                 <Route path="/admin" element={<DashboardPage />} />
@@ -140,6 +143,7 @@ function App() {
                 <Route path="/dashboard/forms/education-record/:id/edit" element={<FormsPage />} />
                 <Route path="/dashboard/forms/education-record" element={<Navigate to="/dashboard/forms" replace />} />
               </Route>
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
         </Suspense>
