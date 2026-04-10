@@ -17,13 +17,20 @@ export function login(email: string, password: string) {
   });
 }
 
-export function register(data: {
+export interface RegisterDonorPayload {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
-}) {
-  return apiFetch<void>('/api/auth/register', {
+  phone: string;
+  region: string;
+  country: string;
+  supporterType?: string;
+  organizationName?: string;
+}
+
+export function register(data: RegisterDonorPayload) {
+  return apiFetch<{ message?: string }>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(data),
   });
