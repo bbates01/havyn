@@ -44,6 +44,28 @@ function PublicNavbar() {
               Privacy Policy
             </NavLink>
           </li>
+          {!loading && isAuthenticated && (
+            <>
+              <li>
+                <NavLink
+                  to={
+                    user?.roles.includes('Admin') ? '/admin'
+                      : user?.roles.includes('Manager') ? '/manager'
+                        : user?.roles.includes('SocialWorker') ? '/staff'
+                          : '/dashboard'
+                  }
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Tools
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/settings" onClick={() => setMenuOpen(false)}>
+                  Settings
+                </NavLink>
+              </li>
+            </>
+          )}
           <li>
             <NavLink to="/login" onClick={() => setMenuOpen(false)}>
               Log In
