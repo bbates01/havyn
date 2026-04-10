@@ -5,6 +5,7 @@ import { apiFetch } from '../api/apiHelper';
 import { useAuth } from '../context/AuthContext';
 import type { InterventionPlan } from '../types/InterventionPlan';
 import type { Resident } from '../types/Resident';
+import FormHistoryList from '../components/FormHistoryList';
 
 type RawObj = Record<string, unknown>;
 
@@ -394,47 +395,6 @@ export default function CaseConferencesPage() {
     setScheduleOpen(true);
   };
 
-  const openEditModal = (plan: InterventionPlan) => {
-    setScheduleError(null);
-    setEditingPlanId(plan.planId);
-    setFResidentId(String(plan.residentId));
-    setFResidentSearch('');
-    setFCategory((PLAN_CATEGORIES.includes(plan.planCategory as PlanCategory)
-      ? plan.planCategory
-      : 'Safety') as PlanCategory);
-    setFDescription(plan.planDescription ?? '');
-    setFServices(plan.servicesProvided ?? '');
-    setFTargetValue(Number.isFinite(plan.targetValue) ? String(plan.targetValue) : '');
-    setFTargetDate(toIsoDateOnly(plan.targetDate) ?? '');
-    setFStatus(
-      (NEW_PLAN_STATUSES.includes(plan.status as NewPlanStatus) ? plan.status : 'Open') as NewPlanStatus
-    );
-    setFConferenceDate(toIsoDateOnly(plan.caseConferenceDate) ?? '');
-    setScheduleOpen(true);
-  };
-
-  const savePlan = (updated: InterventionPlan) => {
-    setPlans((prev) => prev.map((p) => (p.planId === updated.planId ? updated : p)));
-  };
-
-  const deleteConference = async (plan: InterventionPlan) => {
-    if (!window.confirm('Delete this conference from the schedule?')) return;
-    try {
-      const payload = {
-        ...plan,
-        caseConferenceDate: null,
-        updatedAt: new Date().toISOString(),
-      };
-      await apiFetch(`/api/InterventionPlans/UpdatePlan/${plan.planId}`, {
-        method: 'PUT',
-        body: JSON.stringify(payload),
-      });
-      setPlans((prev) => prev.filter((p) => p.planId !== plan.planId));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to delete conference.');
-    }
-  };
-
   const submitSchedule = async () => {
     setScheduleError(null);
     if (!fResidentId) {
@@ -491,24 +451,12 @@ export default function CaseConferencesPage() {
         updatedAt: nowIso,
       };
 
-      if (editingPlanId == null) {
-        const createdRaw = await apiFetch<Record<string, unknown>>('/api/InterventionPlans/AddPlan', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
-        const created = normalizeInterventionPlan(createdRaw);
-        setPlans((prev) => [...prev, created]);
-      } else {
-        const updatedRaw = await apiFetch<Record<string, unknown>>(
-          `/api/InterventionPlans/UpdatePlan/${editingPlanId}`,
-          {
-            method: 'PUT',
-            body: JSON.stringify(payload),
-          }
-        );
-        const updated = normalizeInterventionPlan(updatedRaw);
-        savePlan(updated);
-      }
+      const createdRaw = await apiFetch<Record<string, unknown>>('/api/InterventionPlans/AddPlan', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      const created = normalizeInterventionPlan(createdRaw);
+      setPlans((prev) => [...prev, created]);
       setScheduleOpen(false);
     } catch (e) {
       setScheduleError(e instanceof Error ? e.message : 'Failed to schedule conference.');
@@ -621,28 +569,6 @@ export default function CaseConferencesPage() {
                                   <div className="col-md-6">
                                     <strong>Updated At:</strong> {p.updatedAt || '—'}
                                   </div>
-                                </div>
-                                <div className="d-flex justify-content-end gap-2 mt-3 pt-2" style={{ marginRight: '10px' }}>
-                                <button
-                                  type="button"
-                                  className="btn btn-outline-primary btn-sm px-3"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEditModal(p);
-                                  }}
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-outline-danger btn-sm px-3"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    void deleteConference(p);
-                                  }}
-                                >
-                                  Delete
-                                </button>
                                 </div>
                               </div>
                             )}
@@ -768,28 +694,6 @@ export default function CaseConferencesPage() {
                                     <div className="col-md-6">
                                       <strong>Updated At:</strong> {p.updatedAt || '—'}
                                     </div>
-                                    <div className="col-12 d-flex justify-content-end gap-2 mt-3 pt-2" style={{ marginRight: '10px' }}>
-                                      <button
-                                        type="button"
-                                        className="btn btn-outline-primary btn-sm px-3"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          openEditModal(p);
-                                        }}
-                                      >
-                                        Edit
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn btn-outline-danger btn-sm px-3"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          void deleteConference(p);
-                                        }}
-                                      >
-                                        Delete
-                                      </button>
-                                    </div>
                                   </div>
                                 </div>
                               </td>
@@ -826,6 +730,10 @@ export default function CaseConferencesPage() {
                 </button>
               </div>
             </div>
+          </section>
+
+          <section className="mt-4">
+            <FormHistoryList basePath="/manager" canManage={false} />
           </section>
         </>
       )}

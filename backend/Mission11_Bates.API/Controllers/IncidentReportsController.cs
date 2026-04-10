@@ -109,6 +109,7 @@ namespace Mission11_Bates.Controllers
         }
 
         [HttpPut("UpdateIncident/{incidentId}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UpdateIncident(int incidentId, [FromBody] IncidentReport updatedIncident)
         {
             var scope = await _residentAccess.GetScopeAsync(User);
@@ -138,6 +139,19 @@ namespace Mission11_Bates.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(existing);
+        }
+
+        [HttpDelete("DeleteIncident/{incidentId}")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> DeleteIncident(int incidentId)
+        {
+            var existing = await _context.IncidentReports.FindAsync(incidentId);
+            if (existing == null)
+                return NotFound(new { message = "Incident report not found" });
+
+            _context.IncidentReports.Remove(existing);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

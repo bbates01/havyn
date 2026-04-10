@@ -28,3 +28,9 @@ export function updateHealthRecord(id: number, data: Partial<HealthWellbeingReco
     body: JSON.stringify(data),
   });
 }
+
+export function deleteHealthRecord(id: number) {
+  return apiFetch<void>(`/api/HealthWellbeingRecords/DeleteRecord/${id}`, {
+    method: 'DELETE',
+  });
+}
