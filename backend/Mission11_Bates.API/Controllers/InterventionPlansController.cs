@@ -91,6 +91,8 @@ namespace Mission11_Bates.Controllers
         [HttpPost("AddPlan")]
         public async Task<IActionResult> AddPlan([FromBody] InterventionPlan newPlan)
         {
+            // Assign PlanId explicitly (DB column is NOT auto-generated).
+            newPlan.PlanId = (_context.InterventionPlans.Max(p => (int?)p.PlanId) ?? 0) + 1;
             var scope = await _residentAccess.GetScopeAsync(User);
             if (!_residentAccess.ScopeAllowsCaseAccess(scope))
                 return StatusCode(403, new { message = "Account is not configured for case access." });

@@ -802,7 +802,7 @@ export default function DashboardPage() {
       {/* ── Role Context Header ────────────────────────────────────────── */}
       <div className="mb-4">
         <h4 className="mb-1 fw-bold">
-          Welcome back, {user?.userName ?? user?.email ?? 'User'}
+          Welcome back, {user?.displayName ?? user?.userName ?? user?.email ?? 'User'}!
         </h4>
         <p className="text-muted mb-0">
           {role === 'admin' &&

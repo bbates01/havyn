@@ -16,10 +16,8 @@ namespace Mission11_Bates.Data
         public string ContactName { get; set; }
         [Required]
         public string Email { get; set; }
-        [Required]
-        public string Phone { get; set; }
-        [Required]
-        public string Region { get; set; }
+        public string Phone { get; set; } = string.Empty;
+        public string Region { get; set; } = string.Empty;
         [Required]
         public string Status { get; set; }
         [Required]

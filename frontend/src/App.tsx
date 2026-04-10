@@ -18,6 +18,9 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const DonorsPage = lazy(() => import('./pages/DonorsPage'));
+const PartnersPage = lazy(() => import('./pages/PartnersPage'));
+const CaseConferencesPage = lazy(() => import('./pages/CaseConferencesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
 const AccountsPage = lazy(() => import('./pages/AccountsPage'));
@@ -51,8 +54,14 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route path="/admin" element={<DashboardPage />} />
                 <Route path="/admin/caseload" element={<CaseloadPage />} />
+                <Route path="/admin/donors" element={<DonorsPage />} />
                 <Route path="/admin/reports" element={<ReportsPage />} />
+                <Route path="/admin/partners" element={<PartnersPage />} />
                 <Route path="/manager" element={<DashboardPage />} />
+                <Route path="/manager/caseload" element={<CaseloadPage />} />
+                <Route path="/manager/donors" element={<DonorsPage />} />
+                <Route path="/manager/partners" element={<PartnersPage />} />
+                <Route path="/manager/case-conferences" element={<CaseConferencesPage />} />
                 <Route path="/manager/reports" element={<ReportsPage />} />
                 <Route path="/admin/accounts" element={<AccountsPage />} />
                 <Route path="/admin/accounts/create" element={<StaffCreateUserPage />} />

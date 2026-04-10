@@ -39,6 +39,17 @@ namespace Mission11_Bates.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // In our current DB schema, PartnerId is not auto-generated.
+            // Treat it as application-assigned to avoid EF inserting NULL.
+            modelBuilder.Entity<Partner>()
+                .Property(p => p.PartnerId)
+                .ValueGeneratedNever();
+
+            // In our current DB schema, PlanId is not auto-generated.
+            modelBuilder.Entity<InterventionPlan>()
+                .Property(p => p.PlanId)
+                .ValueGeneratedNever();
+
             modelBuilder.Entity<Supporter>()
                 .HasOne(s => s.User)
                 .WithMany()

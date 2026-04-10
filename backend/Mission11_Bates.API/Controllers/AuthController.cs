@@ -414,6 +414,7 @@ namespace Mission11_Bates.Controllers
             return Ok(new
             {
                 isAuthenticated = true,
+                displayName = user.DisplayName,
                 userName = user.UserName,
                 email = user.Email,
                 roles,
