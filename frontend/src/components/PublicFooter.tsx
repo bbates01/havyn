@@ -65,7 +65,7 @@ function PublicFooter() {
               <Link to="/">Home</Link>
             </li>
             <li>
-              <Link to="/login">Donate</Link>
+              <Link to="/login?from=donate">Donate</Link>
             </li>
             <li>
               <Link to="/privacy">Privacy Policy</Link>

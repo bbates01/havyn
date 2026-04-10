@@ -32,6 +32,16 @@ function PublicNavbar() {
       <nav className={`navbar-collapse${menuOpen ? ' open' : ''}`} style={{ flex: 1 }}>
         <ul className="navbar-links">
           <li>
+            <NavLink to="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/about" onClick={() => setMenuOpen(false)}>
+              About
+            </NavLink>
+          </li>
+          <li>
             <NavLink to="/donor-impact" onClick={() => setMenuOpen(false)}>
               Donor Impact
             </NavLink>
