@@ -21,10 +21,12 @@ function DashboardLayout() {
 
   const dashPath      = base;
   const caseloadPath  = `${base}/caseload`;
+  const donorsPath    = `${base}/donors`;
   const reportsPath   = `${base}/reports`;
   const createUserPath = `${base}/create-user`;
 
   const showReportsTab  = role === 'admin' || role === 'manager';
+  const showDonorsTab   = role === 'admin' || role === 'manager';
   const showCreateUser  = role === 'admin' || role === 'manager';
 
   return (
@@ -53,6 +55,18 @@ function DashboardLayout() {
                 Caseload
               </NavLink>
             </li>
+            {showDonorsTab && (
+              <li className="nav-item">
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? 'active fw-semibold' : 'text-muted'}`
+                  }
+                  to={donorsPath}
+                >
+                  Donor Info
+                </NavLink>
+              </li>
+            )}
             {showReportsTab && (
               <li className="nav-item">
                 <NavLink

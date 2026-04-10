@@ -17,6 +17,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
 const CaseloadPage = lazy(() => import('./pages/CaseloadPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const DonorsPage = lazy(() => import('./pages/DonorsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const StaffCreateUserPage = lazy(() => import('./pages/StaffCreateUserPage'));
 
@@ -47,11 +48,13 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route path="/admin" element={<DashboardPage />} />
                 <Route path="/admin/caseload" element={<CaseloadPage />} />
+                <Route path="/admin/donors" element={<DonorsPage />} />
                 <Route path="/admin/reports" element={<ReportsPage />} />
                 <Route path="/manager" element={<DashboardPage />} />
+                <Route path="/manager/caseload" element={<CaseloadPage />} />
+                <Route path="/manager/donors" element={<DonorsPage />} />
                 <Route path="/manager/reports" element={<ReportsPage />} />
                 <Route path="/admin/create-user" element={<StaffCreateUserPage />} />
-                <Route path="/manager/caseload" element={<CaseloadPage />} />
                 <Route path="/manager/create-user" element={<StaffCreateUserPage />} />
                 <Route path="/staff" element={<DashboardPage />} />
                 <Route path="/staff/caseload" element={<CaseloadPage />} />
