@@ -236,11 +236,17 @@ function safehouseDisplayLabel(sh: Safehouse | undefined): string {
 }
 
 const RISK_FILL: Record<string, string> = {
-  Low: 'var(--bs-success)',
-  Medium: 'var(--bs-warning)',
-  High: 'var(--bs-danger)',
-  Critical: 'var(--bs-dark)',
+  Low: '#5C8A6B',
+  Medium: '#E9C46A',
+  High: '#C47A5A',
+  Critical: '#C65B5B',
 };
+
+const THEME_BLUE = '#4A6FA5';
+const THEME_GREEN = '#5C8A6B';
+const THEME_TAN = '#E9C46A';
+const THEME_RED = '#C65B5B';
+const THEME_NEUTRAL = '#adb5bd';
 
 type SafehouseMetricTab = 'health' | 'education' | 'emotional' | 'overall';
 
@@ -528,10 +534,10 @@ export default function ReportsPage() {
       }
       const fill =
         value >= 50
-          ? 'var(--bs-success)'
+          ? THEME_GREEN
           : value >= 40
-            ? 'var(--bs-warning)'
-            : 'var(--bs-danger)';
+            ? THEME_TAN
+            : THEME_RED;
       return { name: cityName, value, fill };
     });
   }, [comparisonRowsScoped, safehouseMap, safehouseMetricTab]);
@@ -909,7 +915,7 @@ export default function ReportsPage() {
         className="d-flex justify-content-center align-items-center"
         style={{ minHeight: '60vh' }}
       >
-        <div className="spinner-border text-primary" role="status">
+        <div className="spinner-border" style={{ color: THEME_BLUE }} role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
       </div>
@@ -928,7 +934,7 @@ export default function ReportsPage() {
     return (
       <div className="container py-4">
         <div className="text-center py-5">
-          <div className="spinner-border text-primary mb-3" role="status" />
+          <div className="spinner-border mb-3" style={{ color: THEME_BLUE }} role="status" />
           <p className="text-muted">Loading reports…</p>
         </div>
       </div>
@@ -936,13 +942,22 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="container-fluid py-4 px-3 px-md-4">
+    <div className="container-fluid py-4 px-3 px-md-4 dashboard-theme">
       <h1 className="h3 fw-bold mb-4">Reports and Analytics</h1>
 
       {fetchErrors
         .filter((e) => !dismissedErrors.has(e.id))
         .map((e) => (
-          <div key={e.id} className="alert alert-warning alert-dismissible" role="alert">
+          <div
+            key={e.id}
+            className="alert alert-dismissible"
+            role="alert"
+            style={{
+              backgroundColor: '#fcf4df',
+              borderColor: THEME_TAN,
+              color: '#33271d',
+            }}
+          >
             <strong>{e.label}</strong> could not be loaded: {e.message}
             <button
               type="button"
@@ -991,7 +1006,8 @@ export default function ReportsPage() {
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv('reports-ml-meta.csv', [
                   ...incidentFactors.map((f) => ({
@@ -1232,7 +1248,10 @@ export default function ReportsPage() {
 
           {modelMeta ? (
             <>
-              <h5 className="fw-semibold border-start border-4 border-primary ps-3 mb-2">
+              <h5
+                className="fw-semibold border-start border-4 ps-3 mb-2"
+                style={{ borderColor: THEME_BLUE }}
+              >
                 What Drives High-Severity Incidents?
               </h5>
               {incidentFactors.length === 0 ? null : (
@@ -1246,8 +1265,12 @@ export default function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" className="opacity-25" />
                       <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                       <YAxis type="category" dataKey="label" width={200} tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v) => [`${v}%`, 'Importance']} />
-                      <Bar dataKey="importance" fill="var(--bs-primary)" radius={[0, 4, 4, 0]} />
+                      <Tooltip
+                        formatter={(v) => [`${v}%`, 'Importance']}
+                        itemStyle={{ color: '#000' }}
+                        labelStyle={{ color: '#000' }}
+                      />
+                      <Bar dataKey="importance" fill={THEME_BLUE} radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </>
@@ -1259,7 +1282,10 @@ export default function ReportsPage() {
                 <>
                   <hr className="my-4" />
 
-                  <h5 className="fw-semibold border-start border-4 border-primary ps-3 mt-4 mb-2">
+                  <h5
+                    className="fw-semibold border-start border-4 ps-3 mt-4 mb-2"
+                    style={{ borderColor: THEME_BLUE }}
+                  >
                     What Predicts How Long a Resident Stays
                   </h5>
                   <p className="small text-muted mb-3">
@@ -1324,7 +1350,7 @@ export default function ReportsPage() {
                   </p>
                   <div className="table-responsive mb-4">
                     <table className="table table-sm">
-                      <thead className="table-light">
+                      <thead style={{ backgroundColor: '#fcf9f4' }}>
                         <tr>
                           <th>Pathway</th>
                           <th className="text-end">Avg stay (months)</th>
@@ -1346,7 +1372,15 @@ export default function ReportsPage() {
                   <h6 className="fw-semibold mb-2">Reintegration timeline insights</h6>
                   {reintMetaBlock.sample_size_warning != null &&
                     String(reintMetaBlock.sample_size_warning).length > 0 && (
-                      <div className="alert alert-warning" role="alert">
+                      <div
+                        className="alert"
+                        role="alert"
+                        style={{
+                          backgroundColor: '#fcf4df',
+                          borderColor: THEME_TAN,
+                          color: '#33271d',
+                        }}
+                      >
                         {String(reintMetaBlock.sample_size_warning)}
                       </div>
                     )}
@@ -1355,7 +1389,10 @@ export default function ReportsPage() {
                 </>
               )}
 
-              <h5 className="fw-semibold border-start border-4 border-primary ps-3 mb-2">
+              <h5
+                className="fw-semibold border-start border-4 ps-3 mb-2"
+                style={{ borderColor: THEME_BLUE }}
+              >
                 What Social Media Content Leads to More Donor Referrals?
               </h5>
               <p className="small text-muted mb-3">
@@ -1485,12 +1522,16 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Resident outcomes
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv('reports-resident-outcomes.csv', [
                   {
@@ -1539,12 +1580,12 @@ export default function ReportsPage() {
                       {riskDonutData.map((entry) => (
                         <Cell
                           key={entry.name}
-                          fill={RISK_FILL[entry.name] ?? 'var(--bs-secondary)'}
+                          fill={RISK_FILL[entry.name] ?? THEME_NEUTRAL}
                         />
                       ))}
                     </Pie>
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip itemStyle={{ color: '#000' }} labelStyle={{ color: '#000' }} />
+                    <Legend formatter={(value) => <span style={{ color: '#000' }}>{value}</span>} />
                     <text
                       x="50%"
                       y="46%"
@@ -1564,7 +1605,7 @@ export default function ReportsPage() {
               <h6 className="fw-semibold mb-2">Residents by safehouse</h6>
               <div className="table-responsive">
                 <table className="table table-sm table-hover">
-                  <thead className="table-light">
+                  <thead style={{ backgroundColor: '#fcf9f4' }}>
                     <tr>
                       <th>Safehouse</th>
                       <th className="text-end">Count</th>
@@ -1592,7 +1633,7 @@ export default function ReportsPage() {
               <h6 className="fw-semibold mt-4 mb-2">Reintegration success</h6>
               <div className="table-responsive">
                 <table className="table table-sm table-hover">
-                  <thead className="table-light">
+                  <thead style={{ backgroundColor: '#fcf9f4' }}>
                     <tr>
                       <th>Pathway</th>
                       <th className="text-end">Completed</th>
@@ -1629,12 +1670,16 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Services provided
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv('reports-services-provided.csv', [
                   {
@@ -1668,8 +1713,8 @@ export default function ReportsPage() {
           </div>
           <div className="row g-3">
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="display-6 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.caring ?? '—'}
                 </div>
                 <div className="fw-semibold">Caring</div>
@@ -1679,8 +1724,8 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="display-6 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.healing ?? '—'}
                 </div>
                 <div className="fw-semibold">Healing</div>
@@ -1690,8 +1735,8 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="display-6 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.teaching ?? '—'}
                 </div>
                 <div className="fw-semibold">Teaching</div>
@@ -1699,8 +1744,8 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100 bg-light">
-                <div className="fs-4 fw-bold text-primary">
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+                <div className="fs-4 fw-bold" style={{ color: THEME_BLUE }}>
                   <span>{servicesProvided?.legalReferrals ?? '—'}</span>
                   <span className="text-muted fw-normal"> + </span>
                   <span>{servicesProvided?.legalPlans ?? '—'}</span>
@@ -1720,12 +1765,16 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Safehouse performance comparison
             </h2>
             <button
               type="button"
-              className="btn btn-outline-secondary btn-sm"
+              className="btn btn-sm"
+              style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
               onClick={() =>
                 downloadCsv(
                   'reports-safehouse-comparison.csv',
@@ -1748,7 +1797,7 @@ export default function ReportsPage() {
 
           <div className="table-responsive mb-4">
             <table className="table table-sm table-hover align-middle">
-              <thead className="table-light">
+              <thead style={{ backgroundColor: '#fcf9f4' }}>
                 <tr>
                   <th>Safehouse</th>
                   <th className="text-end">Active res. (avg)</th>
@@ -1802,7 +1851,20 @@ export default function ReportsPage() {
                     <li className="nav-item" key={key}>
                       <button
                         type="button"
-                        className={`nav-link py-1 px-2 ${safehouseMetricTab === key ? 'active' : ''}`}
+                        className="nav-link py-1 px-2"
+                        style={
+                          safehouseMetricTab === key
+                            ? {
+                                backgroundColor: THEME_BLUE,
+                                borderColor: THEME_BLUE,
+                                color: '#fff',
+                              }
+                            : {
+                                color: THEME_BLUE,
+                                border: `1px solid ${THEME_BLUE}`,
+                                backgroundColor: '#fff',
+                              }
+                        }
                         onClick={() => setSafehouseMetricTab(key)}
                       >
                         {label}
@@ -1829,7 +1891,11 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" className="opacity-25" />
                   <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                   <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v) => [`${v}%`, 'Score']} />
+                  <Tooltip
+                    formatter={(v) => [`${v}%`, 'Score']}
+                    itemStyle={{ color: '#000' }}
+                    labelStyle={{ color: '#000' }}
+                  />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                     {safehouseMetricBarData.map((entry, i) => (
                       <Cell key={i} fill={entry.fill} />
@@ -1851,7 +1917,10 @@ export default function ReportsPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-            <h2 className="h5 fw-bold border-start border-4 border-primary ps-3 mb-0">
+            <h2
+              className="h5 fw-bold border-start border-4 ps-3 mb-0"
+              style={{ borderColor: THEME_BLUE }}
+            >
               Donation trends
             </h2>
             <span className="small text-muted">
@@ -1865,7 +1934,8 @@ export default function ReportsPage() {
                 <h6 className="mb-0">Top campaigns</h6>
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-sm"
+                  style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
                   onClick={() =>
                     downloadCsv(
                       'reports-donations-campaigns.csv',
@@ -1897,7 +1967,7 @@ export default function ReportsPage() {
                         value: 'Total donation amount (₱)',
                         position: 'insideBottom',
                         offset: -4,
-                        style: { fontSize: 12, fill: 'var(--bs-secondary)' },
+                        style: { fontSize: 12, fill: THEME_NEUTRAL },
                       }}
                     />
                     <YAxis
@@ -1909,14 +1979,16 @@ export default function ReportsPage() {
                         value: 'Campaign',
                         angle: -90,
                         position: 'insideLeft',
-                        style: { fontSize: 12, fill: 'var(--bs-secondary)' },
+                        style: { fontSize: 12, fill: THEME_NEUTRAL },
                       }}
                     />
                     <Tooltip
                       formatter={(v) => [formatPhpAmount(Number(v)), 'Total raised']}
                       labelFormatter={(name) => String(name)}
+                      itemStyle={{ color: '#000' }}
+                      labelStyle={{ color: '#000' }}
                     />
-                    <Bar dataKey="totalValue" fill="var(--bs-info)" name="Total raised" />
+                    <Bar dataKey="totalValue" fill={THEME_BLUE} name="Total raised" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -1927,7 +1999,8 @@ export default function ReportsPage() {
                 <h6 className="mb-0">Recurring vs one-time donors</h6>
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-sm"
+                  style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
                   onClick={() => downloadCsv('reports-donors-type.csv', donorDonutData)}
                 >
                   Export CSV
@@ -1947,12 +2020,12 @@ export default function ReportsPage() {
                     {donorDonutData.map((_, i) => (
                       <Cell
                         key={i}
-                        fill={i === 0 ? 'var(--bs-primary)' : 'var(--bs-secondary)'}
+                        fill={i === 0 ? THEME_BLUE : THEME_NEUTRAL}
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip itemStyle={{ color: '#000' }} labelStyle={{ color: '#000' }} />
+                  <Legend formatter={(value) => <span style={{ color: '#000' }}>{value}</span>} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -1962,7 +2035,8 @@ export default function ReportsPage() {
                 <h6 className="mb-0">Donation Allocations by Program Area (₱)</h6>
                 <button
                   type="button"
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-sm"
+                  style={{ borderColor: THEME_BLUE, color: THEME_BLUE }}
                   onClick={() =>
                     downloadCsv(
                       'reports-allocations-program.csv',
@@ -1996,8 +2070,10 @@ export default function ReportsPage() {
                     <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
                     <Tooltip
                       formatter={(v) => [formatPhpAmount(Number(v)), 'Allocated']}
+                      itemStyle={{ color: '#000' }}
+                      labelStyle={{ color: '#000' }}
                     />
-                    <Bar dataKey="value" fill="var(--bs-primary)" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="value" fill={THEME_BLUE} radius={[0, 4, 4, 0]}>
                       <LabelList
                         dataKey="value"
                         position="right"

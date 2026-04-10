@@ -4,6 +4,7 @@ import './App.css';
 import { AuthProvider } from './context/AuthContext';
 import PublicLayout from './layouts/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
@@ -36,6 +37,7 @@ function RouteFallback() {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <Suspense fallback={<RouteFallback />}>
           <Routes>

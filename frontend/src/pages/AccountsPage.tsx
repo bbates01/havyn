@@ -16,6 +16,7 @@ import type { Resident } from '../types/Resident';
 import { useAuth } from '../context/AuthContext';
 
 type AccountsTab = 'logins' | 'residents';
+const THEME_BLUE = '#4A6FA5';
 
 interface ResidentRow {
   residentId: number;
@@ -324,7 +325,11 @@ function AccountsPage() {
           </p>
         </div>
         {canManageStaffLogins && displayTab === 'logins' && (
-          <Link to={createPath} className="btn btn-primary">
+          <Link
+            to={createPath}
+            className="btn"
+            style={{ backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }}
+          >
             Create account
           </Link>
         )}
@@ -340,7 +345,20 @@ function AccountsPage() {
           <li className="nav-item">
             <button
               type="button"
-              className={`nav-link ${displayTab === 'logins' ? 'active' : ''}`}
+              className="nav-link"
+              style={
+                displayTab === 'logins'
+                  ? {
+                      backgroundColor: THEME_BLUE,
+                      borderColor: THEME_BLUE,
+                      color: '#fff',
+                    }
+                  : {
+                      color: THEME_BLUE,
+                      border: `1px solid ${THEME_BLUE}`,
+                      backgroundColor: '#fff',
+                    }
+              }
               onClick={() => setActiveTab('logins')}
             >
               Staff &amp; donor logins
@@ -349,7 +367,20 @@ function AccountsPage() {
           <li className="nav-item">
             <button
               type="button"
-              className={`nav-link ${displayTab === 'residents' ? 'active' : ''}`}
+              className="nav-link"
+              style={
+                displayTab === 'residents'
+                  ? {
+                      backgroundColor: THEME_BLUE,
+                      borderColor: THEME_BLUE,
+                      color: '#fff',
+                    }
+                  : {
+                      color: THEME_BLUE,
+                      border: `1px solid ${THEME_BLUE}`,
+                      backgroundColor: '#fff',
+                    }
+              }
               onClick={() => setActiveTab('residents')}
             >
               Residents (case records)

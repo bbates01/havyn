@@ -548,3 +548,35 @@
   border: 0;
 }
 
+.card.dashboard-filter-sticky {
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+.dashboard-theme .bg-success {
+  background-color: #5c8a6b !important;
+}
+
+.dashboard-theme .text-success {
+  color: #5c8a6b !important;
+}
+
+.dashboard-theme .bg-warning {
+  background-color: #e9c46a !important;
+}
+
+.dashboard-theme .text-warning {
+  color: #e9c46a !important;
+}
+
+.dashboard-theme .bg-danger {
+  background-color: #c65b5b !important;
+}
+
+.dashboard-theme .text-danger {
+  color: #c65b5b !important;
+}
+

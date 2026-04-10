@@ -1135,7 +1135,15 @@ export default function CaseloadPage() {
                         {sh.city?.trim() || sh.name}
                         {sh.city?.trim() && sh.name ? ` · ${sh.name}` : ''}
                       </span>
-                      <span className="badge bg-primary" style={{ marginRight: 28, flexShrink: 0 }}>
+                      <span
+                        className="badge"
+                        style={{
+                          marginRight: 28,
+                          flexShrink: 0,
+                          backgroundColor: 'var(--accent)',
+                          color: '#fff',
+                        }}
+                      >
                         {shResidents.length} resident
                         {shResidents.length !== 1 ? 's' : ''}
                       </span>
