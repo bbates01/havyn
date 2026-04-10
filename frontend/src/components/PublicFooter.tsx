@@ -2,11 +2,15 @@ import { Link, useLocation } from 'react-router-dom';
 
 function PublicFooter() {
   const location = useLocation();
-  const hideFooterTitle = location.pathname === '/login';
+  const isLoginPage = location.pathname === '/login';
+
+  if (isLoginPage) {
+    return null;
+  }
 
   return (
     <footer className="public-footer">
-      {!hideFooterTitle && <h2 className="footer-title">Learn More About Us</h2>}
+      <h2 className="footer-title">Learn More About Us</h2>
       <div className="footer-grid">
         <div className="footer-links">
           <h4>About Us</h4>
