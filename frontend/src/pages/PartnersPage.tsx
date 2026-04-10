@@ -695,9 +695,6 @@ export default function PartnersPage() {
         endDate: npEnd.trim() || null,
         notes: npNotes.trim() || null,
       };
-      // #region agent log
-      fetch('http://127.0.0.1:7932/ingest/df25aa2f-5688-4e90-abed-6c03ae1f29b3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'128924'},body:JSON.stringify({sessionId:'128924',runId:'pre-fix',hypothesisId:'H3',location:'PartnersPage.tsx:691',message:'submitNewPartner body snapshot',data:{partnerNameLen:body.partnerName.length,partnerTypeLen:body.partnerType.length,roleTypeLen:body.roleType.length,contactNameLen:body.contactName.length,emailLen:body.email.length,phoneLen:body.phone.length,regionLen:body.region.length,status:body.status,startDate:body.startDate,endDate:body.endDate,notesLen:(body.notes??'').length},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion agent log
       const created = await apiFetch<Record<string, unknown>>('/api/Partners/AddPartner', {
         method: 'POST',
         body: JSON.stringify(body),
@@ -710,9 +707,6 @@ export default function PartnersPage() {
       setSelectedPartnerId(p.partnerId);
       setPageIndex(1);
     } catch (e) {
-      // #region agent log
-      fetch('http://127.0.0.1:7932/ingest/df25aa2f-5688-4e90-abed-6c03ae1f29b3',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'128924'},body:JSON.stringify({sessionId:'128924',runId:'pre-fix',hypothesisId:'H4',location:'PartnersPage.tsx:709',message:'submitNewPartner error',data:{errMsg:e instanceof Error ? e.message : String(e)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion agent log
       pushAlert(e instanceof Error ? e.message : 'Failed to create partner.');
     } finally {
       setNpSaving(false);

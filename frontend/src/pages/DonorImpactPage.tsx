@@ -16,24 +16,6 @@ function DonorImpactPage() {
 
   useEffect(() => {
     if (loading) return;
-    // #region agent log
-    fetch('http://127.0.0.1:7610/ingest/17f4b294-de20-4553-b916-4609ea75d936', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '6eba7f' },
-      body: JSON.stringify({
-        sessionId: '6eba7f',
-        hypothesisId: 'H1',
-        runId: 'donate-cta',
-        location: 'DonorImpactPage.tsx',
-        message: 'donate CTA resolved',
-        data: {
-          isDonor: !!user?.roles?.includes('Donor'),
-          donateThroughTo,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
   }, [loading, user, donateThroughTo]);
 
   return (
