@@ -58,7 +58,7 @@ function StatsSection() {
               transformed through safety, education, and compassionate care.
             </p>
             <div className="stats-actions">
-              <Link to="/donor" className="hero-btn-primary">
+              <Link to="/donor" className="btn-hero-primary">
                 See Donor Impact
               </Link>
             </div>

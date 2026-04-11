@@ -878,7 +878,7 @@ export default function DashboardPage() {
       {/* ── Section 2: ML Insights Panel ───────────────────────────────── */}
       <div
         className="card mb-4 shadow-sm border-0"
-        style={{ backgroundColor: '#fcf9f4' }}
+        style={{ backgroundColor: 'var(--panel)' }}
       >
         <div className="card-body">
           <h5
@@ -1665,7 +1665,7 @@ export default function DashboardPage() {
                             </div>
                             <DomainBar value={prediction.emotionalProb} />
                           </div>
-                          <div className="mt-3 p-2 rounded" style={{ backgroundColor: '#f0fdf4' }}>
+                          <div className="mt-3 p-2 rounded" style={{ backgroundColor: 'var(--success-bg)' }}>
                             <div className="d-flex justify-content-between">
                               <span className="fw-bold">Overall Improvement</span>
                               <span className="fw-bold fs-5">{pct(prediction.overallScore)}</span>

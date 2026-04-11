@@ -77,7 +77,7 @@ const ITEM_CATEGORIES = [
 ] as const;
 
 const INTENDED_USES = ['Meals', 'Education', 'Shelter', 'Hygiene', 'Health'] as const;
-const THEME_BLUE = '#4A6FA5';
+const THEME_BLUE = 'var(--blue)';
 
 const RECEIVED_CONDITIONS = ['New', 'Good', 'Fair'] as const;
 

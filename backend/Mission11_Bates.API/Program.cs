@@ -75,8 +75,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax; // Same-origin now, Lax is correct and more secure
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = builder.Environment.IsDevelopment()  // set SameSite conditionally: None for local dev (since React is on a different port), Lax for production (same-origin)
+        ? SameSiteMode.None 
+        : SameSiteMode.Lax;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
 
@@ -96,7 +98,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.Configure<CookieAuthenticationOptions>(IdentityConstants.TwoFactorUserIdScheme, options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax; // Same-origin now
+    options.Cookie.SameSite = builder.Environment.IsDevelopment() ? SameSiteMode.None : SameSiteMode.Lax; // Same-origin now, Lax is correct and more secure
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 

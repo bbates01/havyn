@@ -517,25 +517,37 @@ body {
 }
 
 .btn-hero-primary {
-  padding: 0.75rem 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.75rem;
   border-radius: 999px;
   border: none;
   background: var(--accent);
-  color: #1f2933;
+  color: #fff;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   text-decoration: none;
-  transition: transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 4px 14px rgba(212, 168, 67, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 16px rgba(20, 111, 133, 0.30);
 }
 
 .btn-hero-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 168, 67, 0.45);
-  color: #1f2933;
+  box-shadow: 0 6px 22px rgba(20, 111, 133, 0.45);
+  color: #fff;
+}
+
+.btn-hero-primary:focus-visible,
+.btn-hero-secondary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
 .btn-hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.75rem 2rem;
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.5);
@@ -551,6 +563,27 @@ body {
   background: rgba(255, 255, 255, 0.12);
   border-color: #fff;
   color: #fff;
+}
+
+/* Outline variant for use on light backgrounds */
+.btn-hero-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  border: 2px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-hero-outline:hover {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
 }
 
 .panel {
@@ -590,26 +623,66 @@ body {
 }
 
 .dashboard-theme .bg-success {
-  background-color: #5c8a6b !important;
+  background-color: var(--green) !important;
 }
 
 .dashboard-theme .text-success {
-  color: #5c8a6b !important;
+  color: var(--green) !important;
 }
 
 .dashboard-theme .bg-warning {
-  background-color: #e9c46a !important;
+  background-color: var(--gold) !important;
 }
 
 .dashboard-theme .text-warning {
-  color: #e9c46a !important;
+  color: var(--gold) !important;
 }
 
 .dashboard-theme .bg-danger {
-  background-color: #c65b5b !important;
+  background-color: var(--danger) !important;
 }
 
 .dashboard-theme .text-danger {
-  color: #c65b5b !important;
+  color: var(--danger) !important;
+}
+
+/* ── Dashboard blue action buttons ── */
+.btn-theme-blue {
+  background-color: var(--blue) !important;
+  border-color: var(--blue) !important;
+  color: #fff !important;
+}
+
+.btn-theme-blue:hover {
+  background-color: color-mix(in srgb, var(--blue) 85%, #000) !important;
+  border-color: color-mix(in srgb, var(--blue) 85%, #000) !important;
+  color: #fff !important;
+}
+
+/* ── Risk badge ── */
+.badge-risk-high {
+  background-color: var(--orange) !important;
+  color: #fff !important;
+}
+
+/* ── Error pages ── */
+.error-page {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-page-code {
+  font-size: 5rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.error-page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 

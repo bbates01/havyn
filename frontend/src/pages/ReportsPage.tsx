@@ -242,10 +242,12 @@ const RISK_FILL: Record<string, string> = {
   Critical: '#C65B5B',
 };
 
-const THEME_BLUE = '#4A6FA5';
-const THEME_GREEN = '#5C8A6B';
-const THEME_TAN = '#E9C46A';
-const THEME_RED = '#C65B5B';
+// These hex values are used as SVG fill colors in Recharts and must stay as literals.
+// The CSS equivalents are: --blue, --green, --gold, --danger, --muted (see index.css).
+const THEME_BLUE = '#4a6fa5';
+const THEME_GREEN = '#4a7c59';
+const THEME_TAN = '#e8b730';
+const THEME_RED = '#c65b5b';
 const THEME_NEUTRAL = '#adb5bd';
 
 type SafehouseMetricTab = 'health' | 'education' | 'emotional' | 'overall';
@@ -953,9 +955,9 @@ export default function ReportsPage() {
             className="alert alert-dismissible"
             role="alert"
             style={{
-              backgroundColor: '#fcf4df',
+              backgroundColor: 'var(--surface-warm)',
               borderColor: THEME_TAN,
-              color: '#33271d',
+              color: 'var(--text)',
             }}
           >
             <strong>{e.label}</strong> could not be loaded: {e.message}
@@ -1350,7 +1352,7 @@ export default function ReportsPage() {
                   </p>
                   <div className="table-responsive mb-4">
                     <table className="table table-sm">
-                      <thead style={{ backgroundColor: '#fcf9f4' }}>
+                      <thead style={{ backgroundColor: 'var(--panel)' }}>
                         <tr>
                           <th>Pathway</th>
                           <th className="text-end">Avg stay (months)</th>
@@ -1376,9 +1378,9 @@ export default function ReportsPage() {
                         className="alert"
                         role="alert"
                         style={{
-                          backgroundColor: '#fcf4df',
+                          backgroundColor: 'var(--surface-warm)',
                           borderColor: THEME_TAN,
-                          color: '#33271d',
+                          color: 'var(--text)',
                         }}
                       >
                         {String(reintMetaBlock.sample_size_warning)}
@@ -1605,7 +1607,7 @@ export default function ReportsPage() {
               <h6 className="fw-semibold mb-2">Residents by safehouse</h6>
               <div className="table-responsive">
                 <table className="table table-sm table-hover">
-                  <thead style={{ backgroundColor: '#fcf9f4' }}>
+                  <thead style={{ backgroundColor: 'var(--panel)' }}>
                     <tr>
                       <th>Safehouse</th>
                       <th className="text-end">Count</th>
@@ -1633,7 +1635,7 @@ export default function ReportsPage() {
               <h6 className="fw-semibold mt-4 mb-2">Reintegration success</h6>
               <div className="table-responsive">
                 <table className="table table-sm table-hover">
-                  <thead style={{ backgroundColor: '#fcf9f4' }}>
+                  <thead style={{ backgroundColor: 'var(--panel)' }}>
                     <tr>
                       <th>Pathway</th>
                       <th className="text-end">Completed</th>
@@ -1713,7 +1715,7 @@ export default function ReportsPage() {
           </div>
           <div className="row g-3">
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: 'var(--panel)' }}>
                 <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.caring ?? '—'}
                 </div>
@@ -1724,7 +1726,7 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: 'var(--panel)' }}>
                 <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.healing ?? '—'}
                 </div>
@@ -1735,7 +1737,7 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: 'var(--panel)' }}>
                 <div className="display-6 fw-bold" style={{ color: THEME_BLUE }}>
                   {servicesProvided?.teaching ?? '—'}
                 </div>
@@ -1744,7 +1746,7 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="border rounded p-3 h-100" style={{ backgroundColor: '#fcf9f4' }}>
+              <div className="border rounded p-3 h-100" style={{ backgroundColor: 'var(--panel)' }}>
                 <div className="fs-4 fw-bold" style={{ color: THEME_BLUE }}>
                   <span>{servicesProvided?.legalReferrals ?? '—'}</span>
                   <span className="text-muted fw-normal"> + </span>
@@ -1797,7 +1799,7 @@ export default function ReportsPage() {
 
           <div className="table-responsive mb-4">
             <table className="table table-sm table-hover align-middle">
-              <thead style={{ backgroundColor: '#fcf9f4' }}>
+              <thead style={{ backgroundColor: 'var(--panel)' }}>
                 <tr>
                   <th>Safehouse</th>
                   <th className="text-end">Active res. (avg)</th>
@@ -1861,7 +1863,7 @@ export default function ReportsPage() {
                               }
                             : {
                                 color: THEME_BLUE,
-                                border: `1px solid ${THEME_BLUE}`,
+                                border: '1px solid var(--blue)',
                                 backgroundColor: '#fff',
                               }
                         }

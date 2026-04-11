@@ -84,7 +84,7 @@ function DonorImpactPage() {
                 </article>
               </div>
               <div className="donor-gift-actions">
-                <Link to={donateThroughTo} className="donor-cta-primary">
+                <Link to={donateThroughTo} className="btn-hero-primary">
                   Donate through Havyn
                 </Link>
               </div>
@@ -146,10 +146,10 @@ function DonorImpactPage() {
             </section>
 
             <div className="donor-left-actions">
-              <Link to={donateThroughTo} className="donor-cta-primary">
+              <Link to={donateThroughTo} className="btn-hero-primary">
                 Donate through Havyn
               </Link>
-              <Link to="/" className="donor-cta-secondary">
+              <Link to="/" className="btn-hero-outline">
                 Back to home
               </Link>
             </div>

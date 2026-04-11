@@ -16,7 +16,7 @@ import type { Resident } from '../types/Resident';
 import { useAuth } from '../context/AuthContext';
 
 type AccountsTab = 'logins' | 'residents';
-const THEME_BLUE = '#4A6FA5';
+const THEME_BLUE = 'var(--blue)';
 
 interface ResidentRow {
   residentId: number;
@@ -327,8 +327,7 @@ function AccountsPage() {
         {canManageStaffLogins && displayTab === 'logins' && (
           <Link
             to={createPath}
-            className="btn"
-            style={{ backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }}
+            className="btn btn-theme-blue"
           >
             Create account
           </Link>
@@ -355,7 +354,7 @@ function AccountsPage() {
                     }
                   : {
                       color: THEME_BLUE,
-                      border: `1px solid ${THEME_BLUE}`,
+                      border: '1px solid var(--blue)',
                       backgroundColor: '#fff',
                     }
               }
@@ -377,7 +376,7 @@ function AccountsPage() {
                     }
                   : {
                       color: THEME_BLUE,
-                      border: `1px solid ${THEME_BLUE}`,
+                      border: '1px solid var(--blue)',
                       backgroundColor: '#fff',
                     }
               }

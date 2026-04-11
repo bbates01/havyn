@@ -20,6 +20,31 @@
   --container: 1100px;
   --focus: rgba(139, 94, 60, 0.5);
 
+  /* Status colors */
+  --error: #b91c1c;
+  --error-dark: #991b1b;
+  --error-bg: #fef2f2;
+  --error-border: #fecaca;
+  --success-dark: #065f46;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+
+  /* Dashboard accent blue */
+  --blue: #4a6fa5;
+
+  /* Warning / risk badge */
+  --orange: #fd7e14;
+
+  /* Gold accent (map marker, warning badges) */
+  --gold: #e8b730;
+
+  /* Danger (distinct from --error, used in dashboard status badges) */
+  --danger: #c65b5b;
+
+  /* Dark text shades */
+  --text-dark: #1e293b;
+  --text-darker: #0f172a;
+
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text);
   background-color: var(--surface);
