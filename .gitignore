@@ -43,6 +43,7 @@ backend/publish-out/
 *.suo
 *.db
 *.sqlite3
+**/wwwroot
 
 # Rider / ReSharper
 *.sln.iml
