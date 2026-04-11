@@ -36,7 +36,7 @@
   display: block;
   margin-top: 0.35rem;
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--muted);
   word-break: break-all;
 }
 
@@ -70,7 +70,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: var(--muted);
 }
 
 .donor-dashboard-summary {
@@ -100,7 +100,7 @@
   margin-bottom: 1rem;
   font-size: 0.86rem;
   line-height: 1.5;
-  color: #1e293b;
+  color: var(--text-dark);
 }
 
 .donor-callout-icon {
@@ -282,7 +282,7 @@
 }
 
 .donor-error {
-  color: #b91c1c;
+  color: var(--error);
   font-size: 0.88rem;
   margin-top: 0.5rem;
 }
@@ -300,7 +300,7 @@
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.55;
-  color: #475569;
+  color: var(--muted);
   max-width: 26rem;
   margin-left: auto;
   margin-right: auto;

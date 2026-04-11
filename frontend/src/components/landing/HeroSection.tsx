@@ -19,10 +19,10 @@ function HeroSection() {
           and a path toward a new beginning.
         </p>
         <div className="hero-actions">
-          <Link to="/login?from=donate" className="hero-btn-primary">
+          <Link to="/login?from=donate" className="btn-hero-primary">
             Donate Now
           </Link>
-          <a href="#mission" className="hero-btn-secondary">
+          <a href="#mission" className="btn-hero-secondary">
             Learn More
           </a>
         </div>

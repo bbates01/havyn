@@ -83,15 +83,15 @@
 }
 
 .mfa-message--success {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: var(--success-bg);
+  color: var(--success-dark);
+  border: 1px solid var(--success-border);
 }
 
 .mfa-message--error {
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: var(--error-bg);
+  color: var(--error-dark);
+  border: 1px solid var(--error-border);
 }
 
 .mfa-status-text {

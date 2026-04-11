@@ -214,7 +214,7 @@
 }
 
 .login-feedback--error {
-  color: #b91c1c;
+  color: var(--error);
 }
 
 .login-feedback--success {

@@ -170,73 +170,6 @@
   gap: 0.85rem;
 }
 
-/* ── Buttons ── */
-
-.hero-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.65rem 1.75rem;
-  border-radius: 999px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.95rem;
-  text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 16px rgba(26, 139, 165, 0.35);
-}
-
-.hero-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(26, 139, 165, 0.5);
-  color: #fff;
-}
-
-.hero-btn-primary:focus-visible,
-.hero-btn-secondary:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 3px;
-}
-
-.hero-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.85rem 2.25rem;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  background: transparent;
-  color: #fff;
-  font-weight: 600;
-  font-size: 1.02rem;
-  text-decoration: none;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.hero-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: #fff;
-  color: #fff;
-}
-
-.hero-btn-dark {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: transparent;
-}
-
-.hero-btn-dark:hover {
-  background: var(--primary-soft);
-  border-color: var(--primary-dark);
-  color: var(--primary-dark);
-}
-
-.hero-btn-dark:focus-visible {
-  outline-color: var(--primary);
-}
-
 /* ── Shared landing layout ── */
 
 .landing-section {
@@ -379,7 +312,7 @@
   height: 6px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: #e8b730;
+  background: var(--gold);
   transition: box-shadow 0.16s ease;
   box-shadow:
     0 0 4px 2px rgba(232, 183, 48, 0.8),
@@ -595,7 +528,7 @@
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
-.cta-band .hero-btn-primary:focus-visible {
+.cta-band .btn-hero-primary:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
 }
@@ -643,9 +576,9 @@
     flex-direction: column;
   }
 
-  .hero-btn-primary,
-  .hero-btn-secondary,
-  .hero-btn-dark {
+  .btn-hero-primary,
+  .btn-hero-secondary,
+  .btn-hero-outline {
     width: 100%;
     max-width: 280px;
   }

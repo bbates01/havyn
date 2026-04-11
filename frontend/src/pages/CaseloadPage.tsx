@@ -73,7 +73,6 @@ interface Safehouse {
   status: string;
 }
 
-const THEME_BLUE = '#4A6FA5';
 
 function safehouseCityLabel(
   safehouses: Safehouse[],
@@ -181,8 +180,7 @@ function RiskBadge({ level }: { level: string | null }) {
   if (!level) return <span className="text-muted">—</span>;
   return (
     <span
-      className={`badge ${RISK_BADGE[level] ?? 'bg-secondary'}`}
-      style={level === 'High' ? { backgroundColor: '#fd7e14', color: '#fff' } : undefined}
+      className={`badge ${RISK_BADGE[level] ?? 'bg-secondary'}${level === 'High' ? ' badge-risk-high' : ''}`}
     >
       {level}
     </span>
@@ -1100,8 +1098,7 @@ export default function CaseloadPage() {
             </p>
           </div>
           <button
-            className="btn btn-sm"
-            style={{ backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }}
+            className="btn btn-sm btn-theme-blue"
             onClick={() => navigate(`${basePath}/residents/new`)}
           >
             + New Resident
@@ -1122,8 +1119,7 @@ export default function CaseloadPage() {
             </p>
           </div>
           <button
-            className="btn btn-sm"
-            style={{ backgroundColor: THEME_BLUE, borderColor: THEME_BLUE, color: '#fff' }}
+            className="btn btn-sm btn-theme-blue"
             onClick={() => navigate(`${basePath}/residents/new`)}
           >
             + New Resident
