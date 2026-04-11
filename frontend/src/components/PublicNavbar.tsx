@@ -64,7 +64,8 @@ function PublicNavbar() {
                     user?.roles.includes('Admin') ? '/admin'
                       : user?.roles.includes('Manager') ? '/manager'
                         : user?.roles.includes('SocialWorker') ? '/staff'
-                          : '/dashboard'
+                          : user?.roles.includes('Donor') ? '/donor/dashboard'
+                            : '/'
                   }
                   onClick={() => setMenuOpen(false)}
                 >
