@@ -1,0 +1,6 @@
+@Havyn_HostAddress = http://localhost:5005
+
+GET {{Havyn_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
